@@ -6,6 +6,7 @@ import { viteSingleFile } from "vite-plugin-singlefile";
 // single, zero-dependency file that opens in any browser (great for reviewers).
 export default defineConfig({
   plugins: [react(), viteSingleFile()],
+  server: { open: true },
   build: { target: "es2020", assetsInlineLimit: 100000000, cssCodeSplit: false },
   test: { environment: "node", include: ["tests/**/*.test.ts"] },
 });
