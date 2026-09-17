@@ -1,0 +1,6 @@
+{
+  "currency": "EUR",
+  "contingencyPct": 20,
+  "romBandByConfidence": { "High": 0.12, "Medium": 0.20, "Low": 0.30 },
+  "disclaimer": "AI-assisted internal planning output. Not a final quote, contractual commitment, or delivery guarantee."
+}

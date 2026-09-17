@@ -1,0 +1,192 @@
+{
+  "scenarioId": "orion",
+  "analysis": {
+    "requirements": [
+      {
+        "id": "BR_01",
+        "type": "Business",
+        "priority": "High",
+        "classification": "customer-stated",
+        "module": "Platform",
+        "description": "Replace the legacy on-prem order-management system with a cloud-based platform.",
+        "sourceText": "They want a modern, cloud-based platform for store associates and call-centre agents.",
+        "dependencies": []
+      },
+      {
+        "id": "FR_01",
+        "type": "Functional",
+        "priority": "High",
+        "classification": "customer-stated",
+        "module": "Order Management",
+        "description": "Web app for associates to create and track orders quickly.",
+        "sourceText": "Store associates need a fast web app to create and track orders.",
+        "dependencies": [
+          "NFR_01"
+        ]
+      },
+      {
+        "id": "FR_02",
+        "type": "Functional",
+        "priority": "High",
+        "classification": "customer-stated",
+        "module": "AI Assist",
+        "description": "AI assistant answers 'where is my order' using order + shipment data.",
+        "sourceText": "an AI assistant that helps agents answer \"where is my order\" questions",
+        "dependencies": [
+          "DATA_01",
+          "INT_01"
+        ]
+      },
+      {
+        "id": "FR_03",
+        "type": "Functional",
+        "priority": "Medium",
+        "classification": "customer-stated",
+        "module": "AI Assist",
+        "description": "AI drafts customer email replies for agent approval before sending.",
+        "sourceText": "drafts customer email replies for agent approval",
+        "dependencies": [
+          "SEC_02"
+        ]
+      },
+      {
+        "id": "FR_04",
+        "type": "Functional",
+        "priority": "Low",
+        "classification": "assumed",
+        "module": "Returns",
+        "description": "Returns processing workflow (scope unconfirmed for phase 1).",
+        "sourceText": "They are unsure whether returns processing is in scope for phase 1.",
+        "dependencies": [],
+        "openQuestion": "OQ_01"
+      },
+      {
+        "id": "INT_01",
+        "type": "Integration",
+        "priority": "High",
+        "classification": "customer-stated",
+        "module": "Integration",
+        "description": "Near-real-time order sync with SAP ERP.",
+        "sourceText": "Orders must sync with the existing SAP ERP ... in near real time.",
+        "dependencies": []
+      },
+      {
+        "id": "INT_02",
+        "type": "Integration",
+        "priority": "High",
+        "classification": "customer-stated",
+        "module": "Integration",
+        "description": "Order/customer sync with Salesforce CRM.",
+        "sourceText": "and the Salesforce CRM in near real time.",
+        "dependencies": []
+      },
+      {
+        "id": "DATA_01",
+        "type": "Data",
+        "priority": "High",
+        "classification": "customer-stated",
+        "module": "Data",
+        "description": "Store order and shipment data with EU residency.",
+        "sourceText": "Data must stay in the EU.",
+        "dependencies": [
+          "SEC_01"
+        ]
+      },
+      {
+        "id": "NFR_01",
+        "type": "Non-functional",
+        "priority": "High",
+        "classification": "customer-stated",
+        "module": "Platform",
+        "description": "Scale to Black Friday peak of ~500,000 orders/day without degradation.",
+        "sourceText": "handle Black Friday peaks (up to 500,000 orders/day) without degradation.",
+        "dependencies": []
+      },
+      {
+        "id": "NFR_02",
+        "type": "Non-functional",
+        "priority": "Medium",
+        "classification": "ai-inferred",
+        "module": "Platform",
+        "description": "Low-latency order creation (<1s) for associate productivity.",
+        "sourceText": "Store associates need a fast web app (performance implied).",
+        "dependencies": []
+      },
+      {
+        "id": "SEC_01",
+        "type": "Security",
+        "priority": "High",
+        "classification": "customer-stated",
+        "module": "Security",
+        "description": "GDPR compliance and comprehensive audit logging.",
+        "sourceText": "GDPR compliance and audit logging are mandatory.",
+        "dependencies": []
+      },
+      {
+        "id": "SEC_02",
+        "type": "Security",
+        "priority": "High",
+        "classification": "customer-stated",
+        "module": "Security",
+        "description": "SSO with corporate Microsoft Entra ID; human review of customer-facing AI output.",
+        "sourceText": "support SSO with the corporate Entra ID ... reviewed by an agent.",
+        "dependencies": []
+      }
+    ],
+    "assumptions": [
+      {
+        "id": "ASM_01",
+        "text": "Payment processing remains in the existing system and is out of scope.",
+        "status": "confirmed"
+      },
+      {
+        "id": "ASM_02",
+        "text": "SAP and Salesforce expose usable APIs for near-real-time sync.",
+        "status": "needs-review"
+      },
+      {
+        "id": "ASM_03",
+        "text": "Peak concurrency is ~3,000 simultaneous users during Black Friday.",
+        "status": "needs-review"
+      }
+    ],
+    "openQuestions": [
+      {
+        "id": "OQ_01",
+        "text": "Is returns processing in scope for phase 1?"
+      },
+      {
+        "id": "OQ_02",
+        "text": "What are the SLAs / API rate limits for the SAP ERP integration?"
+      },
+      {
+        "id": "OQ_03",
+        "text": "Which email provider must the AI drafting integrate with?"
+      }
+    ],
+    "aiUseCases": [
+      {
+        "id": "AIU_01",
+        "title": "Order-status Q&A assistant",
+        "reqs": [
+          "FR_02",
+          "DATA_01"
+        ],
+        "pattern": "RAG over order/shipment data",
+        "human": "Suggested answer, agent sends",
+        "deterministic": "Exact status lookups use direct DB queries, not the model."
+      },
+      {
+        "id": "AIU_02",
+        "title": "Customer email drafting",
+        "reqs": [
+          "FR_03",
+          "SEC_02"
+        ],
+        "pattern": "Guided generation with templates",
+        "human": "Mandatory agent approval before send",
+        "deterministic": "Order facts injected from system of record."
+      }
+    ]
+  }
+}

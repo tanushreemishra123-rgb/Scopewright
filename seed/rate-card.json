@@ -1,0 +1,16 @@
+{
+  "currency": "EUR",
+  "note": "Illustrative role-based day rates; the app uses a single configurable blended weekly rate by default.",
+  "roles": [
+    { "role": "Solution Architect", "dayRate": 1150 },
+    { "role": "Tech Lead", "dayRate": 1000 },
+    { "role": "Senior Engineer", "dayRate": 850 },
+    { "role": "Engineer", "dayRate": 650 },
+    { "role": "Data Engineer", "dayRate": 800 },
+    { "role": "AI/ML Engineer", "dayRate": 950 },
+    { "role": "QA Engineer", "dayRate": 600 },
+    { "role": "Delivery Manager", "dayRate": 900 },
+    { "role": "Business Analyst", "dayRate": 700 }
+  ],
+  "derivedBlendedWeeklyRate": 4200
+}

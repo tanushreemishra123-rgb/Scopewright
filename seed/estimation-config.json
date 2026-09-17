@@ -1,0 +1,19 @@
+{
+  "blendedRate": 4200,
+  "currency": "EUR",
+  "contingency": 20,
+  "teamSize": 6,
+  "weeklyHours": 38,
+  "environments": 3,
+  "dataMigration": false,
+  "effortModel": {
+    "capabilityPersonWeeks": { "Low": 3, "Medium": 6, "High": 10 },
+    "integrationPersonWeeks": { "Low": 2, "Medium": 4, "High": 6 },
+    "aiUseCasePersonWeeks": { "Low": 4, "Medium": 6, "High": 10 },
+    "securityUpliftPct": 10,
+    "testingUpliftPct": 15,
+    "environmentUpliftPerExtraEnv": 2,
+    "dataMigrationUplift": 8
+  },
+  "confidenceBands": { "High": 0.12, "Medium": 0.20, "Low": 0.30 }
+}

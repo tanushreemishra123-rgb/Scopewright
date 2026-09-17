@@ -1,0 +1,260 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Scopewright — Architecture</title>
+<style>
+  :root{
+    --bg:#F4F6F9; --surface:#FFFFFF; --surface-2:#FAFBFD; --surface-3:#F1F3F7;
+    --ink:#15171E; --ink-soft:#5A6273; --ink-faint:#8A93A6;
+    --line:#E4E8EE; --line-strong:#CDD3DD;
+    --accent:#4338CA; --accent-soft:#EDECFC; --accent-ink:#3B32B8;
+    --ingest:#0E7C66; --ingest-soft:#E1F4EF;
+    --ai:#6D28D9; --ai-soft:#F0E9FD;
+    --gen:#B45309; --gen-soft:#FBEEDD;
+    --val:#0369A1; --val-soft:#E2F1FB;
+    --shadow:0 1px 2px rgba(20,30,50,.04),0 8px 24px -12px rgba(20,30,50,.14);
+    --radius:12px;
+  }
+  @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+    --bg:#0C0E13; --surface:#14171E; --surface-2:#181C24; --surface-3:#1F242E;
+    --ink:#EAECF2; --ink-soft:#9AA3B4; --ink-faint:#6B7385;
+    --line:#242A34; --line-strong:#333B48;
+    --accent:#8B84F0; --accent-soft:#211F3A; --accent-ink:#B7B1F8;
+    --ingest:#3FD6AE; --ingest-soft:#122A25; --ai:#B79BF5; --ai-soft:#221B34;
+    --gen:#E7A94F; --gen-soft:#2B2113; --val:#5FB0E8; --val-soft:#0F2130;
+    --shadow:0 1px 2px rgba(0,0,0,.3),0 12px 30px -14px rgba(0,0,0,.6);
+  }}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font-family:"Space Grotesk",Inter,system-ui,-apple-system,"Segoe UI",sans-serif;line-height:1.55;
+    -webkit-font-smoothing:antialiased}
+  .wrap{max-width:1040px;margin:0 auto;padding:40px 26px 80px}
+  h1{font-size:30px;letter-spacing:-.02em;margin:0 0 6px}
+  h2{font-size:19px;letter-spacing:-.01em;margin:40px 0 6px}
+  p{color:var(--ink-soft);font-size:15px;max-width:760px}
+  .lede{font-size:16px}
+  code{font-family:"JetBrains Mono",ui-monospace,monospace;font-size:.86em;background:var(--surface-3);
+    padding:1px 5px;border-radius:5px;color:var(--accent-ink)}
+  .brand{display:flex;align-items:center;gap:10px;margin-bottom:22px}
+  .brand b{font-size:16px}
+  .tag{font-size:11px;font-weight:600;padding:3px 9px;border-radius:20px;background:var(--accent-soft);color:var(--accent-ink)}
+
+  /* ---- layered component diagram ---- */
+  .diagram{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);
+    box-shadow:var(--shadow);padding:20px 20px 26px;margin-top:14px}
+  .layer{display:grid;grid-template-columns:132px 1fr;gap:16px;align-items:stretch}
+  .gutter{display:flex;flex-direction:column;justify-content:center;font-size:11px;font-weight:700;
+    letter-spacing:.04em;text-transform:uppercase;color:var(--ink-faint)}
+  .gutter small{font-weight:500;text-transform:none;letter-spacing:0;color:var(--ink-faint);opacity:.8;font-size:10.5px}
+  .row{display:flex;gap:10px;flex-wrap:wrap}
+  .box{flex:1 1 150px;min-width:130px;background:var(--surface-2);border:1px solid var(--line-strong);
+    border-radius:9px;padding:11px 12px}
+  .box b{display:block;font-size:13px;font-weight:600}
+  .box span{display:block;font-size:10.5px;color:var(--ink-faint);margin-top:2px;
+    font-family:"JetBrains Mono",monospace}
+  .box.accent{border-color:var(--accent);background:var(--accent-soft)}
+  .tint-ingest{border-color:var(--ingest);background:var(--ingest-soft)}
+  .tint-ai{border-color:var(--ai);background:var(--ai-soft)}
+  .tint-gen{border-color:var(--gen);background:var(--gen-soft)}
+  .tint-val{border-color:var(--val);background:var(--val-soft)}
+  .full{flex-basis:100%}
+  .chev{grid-column:2;display:flex;justify-content:center;color:var(--line-strong);font-size:15px;margin:2px 0}
+  .hub{grid-column:1 / -1;position:relative;margin:4px 0;border:1.5px solid var(--accent);
+    background:var(--accent-soft);border-radius:11px;padding:14px 16px;text-align:center}
+  .hub b{font-size:15px;color:var(--accent-ink)}
+  .hub .sub{font-size:12px;color:var(--ink-soft);margin-top:2px}
+  .hub .loops{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:8px}
+  .loop{font-size:11px;font-weight:600;padding:3px 9px;border-radius:20px;background:var(--surface);
+    border:1px solid var(--line-strong);color:var(--ink-soft)}
+  .legend{display:flex;gap:14px;flex-wrap:wrap;margin-top:16px;font-size:11.5px;color:var(--ink-soft)}
+  .legend i{display:inline-block;width:11px;height:11px;border-radius:3px;margin-right:5px;vertical-align:-1px}
+
+  table{width:100%;border-collapse:collapse;margin-top:10px;font-size:13px;background:var(--surface);
+    border:1px solid var(--line);border-radius:var(--radius);overflow:hidden}
+  th,td{text-align:left;padding:9px 13px;border-bottom:1px solid var(--line)}
+  th{font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:var(--ink-faint);background:var(--surface-2)}
+  td:first-child{font-weight:600}
+  tr:last-child td{border-bottom:none}
+  ul{color:var(--ink-soft);font-size:14.5px;max-width:760px}
+  li{margin-bottom:6px}
+  .svgcard{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);
+    box-shadow:var(--shadow);padding:18px;margin-top:14px;overflow-x:auto}
+  svg{display:block;max-width:100%;height:auto}
+  @media (max-width:640px){.layer{grid-template-columns:1fr}.gutter{flex-direction:row;gap:6px;margin-bottom:2px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="brand">
+    <svg width="30" height="30" viewBox="0 0 32 32"><rect width="32" height="32" rx="8" fill="var(--accent)"/><path d="M9 20 L15 8 L18 14 L23 12" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="9" cy="20" r="2.1" fill="#fff"/><circle cx="15" cy="8" r="2.1" fill="#fff"/><circle cx="23" cy="12" r="2.1" fill="#fff"/></svg>
+    <b>Scopewright</b><span class="tag">Architecture</span>
+  </div>
+
+  <h1>Architecture</h1>
+  <p class="lede">Scopewright is a browser application with a pure, framework-agnostic core engine. There is no backend: the app runs entirely in the browser, and the AI layer is pluggable (mock by default, optional live provider). The <b>structured scope model</b> is the single source of truth that every deliverable is derived from.</p>
+
+  <h2>Component &amp; layer diagram</h2>
+  <p>Requirements flow down into the scope model; every downstream generator reads from it, and change-impact writes back to it.</p>
+
+  <div class="diagram">
+    <div class="layer">
+      <div class="gutter">Browser<br><small>src/App.jsx</small></div>
+      <div class="row"><div class="box accent full"><b>Browser application — React UI</b><span>6-stage workflow rail · in-browser only</span></div></div>
+    </div>
+    <div class="chev">▼</div>
+
+    <div class="layer">
+      <div class="gutter">Ingestion</div>
+      <div class="row">
+        <div class="box tint-ingest"><b>Paste requirements</b><span>RFP · notes · email</span></div>
+        <div class="box tint-ingest"><b>Upload .txt / .md</b><span>FileReader</span></div>
+        <div class="box tint-ingest"><b>Seed scenarios</b><span>core/scenarios.ts</span></div>
+      </div>
+    </div>
+    <div class="chev">▼</div>
+
+    <div class="layer">
+      <div class="gutter">AI orchestration<br><small>src/providers</small></div>
+      <div class="row">
+        <div class="box tint-ai"><b>Provider interface</b><span>analyze()</span></div>
+        <div class="box tint-ai"><b>Mock AI provider</b><span>deterministic · no network</span></div>
+        <div class="box tint-ai"><b>Optional live provider</b><span>OpenAI-compatible · env-gated</span></div>
+      </div>
+    </div>
+    <div class="chev">▼</div>
+
+    <div class="layer">
+      <div class="gutter">Validation</div>
+      <div class="row"><div class="box tint-val full"><b>Structured-output schema validation</b><span>core/schema.ts — IDs · sourceText · enums · duplicates</span></div></div>
+    </div>
+    <div class="chev">▼</div>
+
+    <div class="hub">
+      <b>★ Structured scope model — <code>Session</code></b>
+      <div class="sub">reviewed requirements · assumptions · open questions · classifications &amp; source text (core/types.ts)</div>
+      <div class="loops"><span class="loop">⇅ reviewed &amp; edited in the UI</span><span class="loop">⟲ change-impact writes back</span></div>
+    </div>
+    <div class="chev">▼</div>
+
+    <div class="layer">
+      <div class="gutter">Generators<br><small>core/generators.ts</small></div>
+      <div class="row">
+        <div class="box tint-gen"><b>PRD &amp; functional scope</b><span>buildCapabilities</span></div>
+        <div class="box tint-gen"><b>Cloud-architecture generator</b><span>buildArchitecture · cloudMap</span></div>
+        <div class="box tint-gen"><b>Data &amp; integration strategy</b><span>buildDataStrategy · buildIntegration</span></div>
+        <div class="box tint-gen"><b>AI solution generator</b><span>buildAI</span></div>
+      </div>
+    </div>
+    <div class="chev">▼</div>
+
+    <div class="layer">
+      <div class="gutter">Analysis &amp; checks</div>
+      <div class="row">
+        <div class="box tint-val"><b>Estimation component</b><span>estimate.ts</span></div>
+        <div class="box tint-val"><b>Traceability &amp; coverage</b><span>computeCoverage</span></div>
+        <div class="box tint-val"><b>Change-impact component</b><span>changeImpact.ts</span></div>
+        <div class="box tint-val"><b>Quality-validation gate</b><span>quality.ts</span></div>
+      </div>
+    </div>
+    <div class="chev">▼</div>
+
+    <div class="layer">
+      <div class="gutter">Export<br><small>src/export</small></div>
+      <div class="row">
+        <div class="box"><b>Markdown</b><span>markdown.ts</span></div>
+        <div class="box"><b>DOCX</b><span>docx.ts</span></div>
+        <div class="box"><b>PDF</b><span>print</span></div>
+      </div>
+    </div>
+
+    <div class="legend">
+      <span><i style="background:var(--ingest)"></i>Ingestion</span>
+      <span><i style="background:var(--ai)"></i>AI orchestration</span>
+      <span><i style="background:var(--accent)"></i>Scope model / UI</span>
+      <span><i style="background:var(--gen)"></i>Generators</span>
+      <span><i style="background:var(--val)"></i>Analysis &amp; export</span>
+    </div>
+  </div>
+
+  <h2>Why this shape</h2>
+  <ul>
+    <li><b>Single source of truth.</b> The <code>Session</code> scope model holds reviewed requirements, assumptions and questions. Every generator is a <i>pure function of the model</i>, so editing a requirement re-derives the PRD, architecture, coverage and estimate automatically — a connected model rather than a set of independent prompts.</li>
+    <li><b>Traceability by construction.</b> Requirements carry <code>sourceText</code> + <code>classification</code>. Capabilities, architecture components, AI use cases and estimate rows all store the requirement IDs they consume, so coverage and dangling-reference checks are computable, not manual.</li>
+    <li><b>Reproducible estimation.</b> <code>computeEstimate</code> derives every number from visible scope factors and configurable commercial inputs. No number originates from free-text model output.</li>
+    <li><b>Safe AI boundary.</b> The mock provider needs no network and runs the full experience; the optional live provider’s structured output is schema-validated and falls back to mock on any failure — so paid access is never required.</li>
+  </ul>
+
+  <h2>Data flow (happy path)</h2>
+  <div class="svgcard">
+    <svg viewBox="0 0 980 150" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Data flow diagram">
+      <defs>
+        <marker id="ah" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto">
+          <path d="M0 0 L7 3 L0 6 Z" fill="var(--ink-faint)"/>
+        </marker>
+      </defs>
+      <!-- 6 steps -->
+      <g font-family="'Space Grotesk',sans-serif">
+        <!-- boxes -->
+        <g>
+          <rect x="12"  y="46" width="140" height="58" rx="9" fill="var(--ingest-soft)" stroke="var(--ingest)"/>
+          <rect x="180" y="46" width="140" height="58" rx="9" fill="var(--ai-soft)" stroke="var(--ai)"/>
+          <rect x="348" y="46" width="150" height="58" rx="9" fill="var(--accent-soft)" stroke="var(--accent)"/>
+          <rect x="526" y="46" width="150" height="58" rx="9" fill="var(--gen-soft)" stroke="var(--gen)"/>
+          <rect x="704" y="46" width="130" height="58" rx="9" fill="var(--val-soft)" stroke="var(--val)"/>
+          <rect x="862" y="46" width="106" height="58" rx="9" fill="var(--surface-2)" stroke="var(--line-strong)"/>
+        </g>
+        <!-- arrows -->
+        <g stroke="var(--ink-faint)" stroke-width="1.6" fill="none">
+          <line x1="152" y1="75" x2="178" y2="75" marker-end="url(#ah)"/>
+          <line x1="320" y1="75" x2="346" y2="75" marker-end="url(#ah)"/>
+          <line x1="498" y1="75" x2="524" y2="75" marker-end="url(#ah)"/>
+          <line x1="676" y1="75" x2="702" y2="75" marker-end="url(#ah)"/>
+          <line x1="834" y1="75" x2="860" y2="75" marker-end="url(#ah)"/>
+        </g>
+        <!-- labels -->
+        <g fill="var(--ink)" font-size="12.5" font-weight="600" text-anchor="middle">
+          <text x="82"  y="70">1 · Ingest</text>
+          <text x="250" y="70">2 · Analyze</text>
+          <text x="423" y="70">3 · Review &amp;</text>
+          <text x="601" y="70">4 · Generate</text>
+          <text x="769" y="70">5 · Validate</text>
+          <text x="915" y="70">6 · Export</text>
+        </g>
+        <g fill="var(--ink-soft)" font-size="10" text-anchor="middle" font-family="'JetBrains Mono',monospace">
+          <text x="82"  y="88">requirements</text>
+          <text x="250" y="88">+ validate</text>
+          <text x="423" y="88">approve model</text>
+          <text x="601" y="88">PRD·arch·AI·ROM</text>
+          <text x="769" y="88">coverage·gate</text>
+          <text x="915" y="88">md·docx·pdf</text>
+        </g>
+      </g>
+    </svg>
+  </div>
+  <p style="font-size:13.5px;margin-top:10px">Steps 3–5 loop: change-impact perturbs the approved model (step 3) and steps 4–5 recompute, while unaffected reviewed content is preserved.</p>
+
+  <h2>Node → code map</h2>
+  <table>
+    <thead><tr><th>Diagram node</th><th>Module</th><th>Responsibility</th></tr></thead>
+    <tbody>
+      <tr><td>Browser application</td><td>src/App.jsx</td><td>6-stage UI; two-way with the scope model</td></tr>
+      <tr><td>Requirements ingestion</td><td>App.jsx · core/analyze.ts</td><td>Paste / upload / seed; heuristic extraction of pasted text</td></tr>
+      <tr><td>AI orchestration + Mock provider</td><td>src/providers</td><td>Provider interface; deterministic mock; optional live</td></tr>
+      <tr><td>Structured-output validation</td><td>core/schema.ts</td><td>Validate analysis before it enters the model</td></tr>
+      <tr><td>Structured scope model</td><td>core/types.ts</td><td>Session — the single source of truth</td></tr>
+      <tr><td>PRD &amp; scope generator</td><td>core/generators.ts</td><td>buildCapabilities + coverage view</td></tr>
+      <tr><td>Cloud-architecture generator</td><td>generators.ts · cloudMap.ts</td><td>Cloud-specific services per requirement</td></tr>
+      <tr><td>Data &amp; integration strategy</td><td>core/generators.ts</td><td>buildDataStrategy · buildIntegration</td></tr>
+      <tr><td>AI solution generator</td><td>core/generators.ts</td><td>buildAI — use cases, framework, responsible-AI</td></tr>
+      <tr><td>Estimation component</td><td>core/estimate.ts</td><td>Reproducible effort · timeline · ROM</td></tr>
+      <tr><td>Traceability component</td><td>estimate.ts:computeCoverage</td><td>Covered / uncovered / dangling references</td></tr>
+      <tr><td>Change-impact component</td><td>core/changeImpact.ts</td><td>Affected vs. preserved; immutable update</td></tr>
+      <tr><td>Quality-validation component</td><td>core/quality.ts</td><td>Pre-export gate &amp; consistency checks</td></tr>
+      <tr><td>Export / document generation</td><td>src/export</td><td>Markdown · DOCX · PDF with disclaimer</td></tr>
+    </tbody>
+  </table>
+</div>
+</body>
+</html>

@@ -1,0 +1,7 @@
+Orion Retail runs a 12-year-old on-prem order management system that is slow and hard to change. They want a modern, cloud-based platform for store associates and call-centre agents.
+
+Store associates need a fast web app to create and track orders. Orders must sync with the existing SAP ERP and the Salesforce CRM in near real time. The system must handle Black Friday peaks (up to 500,000 orders/day) without degradation.
+
+They want an AI assistant that helps agents answer "where is my order" questions using order and shipment data, and that drafts customer email replies for agent approval. All AI outputs shown to customers must be reviewed by an agent.
+
+Data must stay in the EU. The platform must support SSO with the corporate Entra ID. They mentioned GDPR compliance and audit logging are mandatory. They are unsure whether returns processing is in scope for phase 1. Payment processing stays in the existing system.
