@@ -34,6 +34,27 @@ export function runQualityGate(
   checks.push({ label: "Assumptions validated", ok: (s.assumptions || []).every(a => a.status !== "needs-review"),
     detail: `${(s.assumptions || []).filter(a => a.status === "needs-review").length} assumption(s) need human validation.` });
 
+  // Integrations present in the delivery plan (estimate rows)
+  const inc = s.requirements.filter(r => r.included !== false);
+  const intIds = inc.filter(r => r.type === "Integration").map(r => r.id);
+  const plannedReqIds = new Set((est?.rows || []).flatMap(r => r.reqs));
+  const missingInts = intIds.filter(id => !plannedReqIds.has(id));
+  checks.push({ label: "Integrations in the delivery plan", ok: missingInts.length === 0,
+    detail: missingInts.length ? `Not costed in the estimate: ${missingInts.join(", ")}` : (intIds.length ? "All integrations appear as estimate workstreams." : "No integrations in scope.") });
+
+  // No conflicting cloud selection vs. requirement text
+  const selected = arch ? arch.cloud : (s.context && s.context.cloud) || "";
+  const others = ({ aws: ["azure", "gcp", "google cloud"], azure: ["aws", "amazon web", "gcp", "google cloud"], gcp: ["aws", "amazon web", "azure"] } as any)[selected] || [];
+  const blob = inc.map(r => r.description + " " + r.sourceText).join(" ").toLowerCase();
+  const conflicts = others.filter((k: string) => blob.includes(k));
+  checks.push({ label: "No conflicting cloud / technology", ok: !selected || conflicts.length === 0,
+    detail: !selected ? "No cloud selected yet." : conflicts.length ? `Requirements mention ${conflicts.join(", ")} but ${selected.toUpperCase()} is selected.` : `Selection (${selected.toUpperCase()}) is consistent with requirements.` });
+
+  // Estimate / commercial internal consistency
+  const consistent = !!est && est.totalWeeks === est.subtotal + est.contingency && est.cost === est.totalWeeks * est.cfg.blendedRate && !est.blocked;
+  checks.push({ label: "Estimate & commercials reconcile", ok: consistent,
+    detail: est ? (est.blocked ? "Blocked by missing estimation inputs." : "totalWeeks = subtotal + contingency; ROM = weeks × rate.") : "No estimate yet." });
+
   const passed = checks.filter(c => c.ok).length;
   const status = checks.every(c => c.ok) ? "Ready to export" : (hiUncovered.length || cov.dangling.length) ? "Blocked" : "Review required";
   return { checks, passed, total: checks.length, status, unsupported: cov.dangling.length, confidence: est ? est.confidence : "—" };

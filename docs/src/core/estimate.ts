@@ -1,5 +1,21 @@
 import type { Session, Capability, Architecture, Coverage, EstimateConfig } from "./types";
-import { includedReqs } from "./generators";
+import { includedReqs, buildRisks } from "./generators";
+
+// Role weekly rates (day rate × 5) — mirrors seed/rate-card.json.
+export const ROLE_RATES: Record<string, number> = {
+  "Solution Architect": 5750, "Tech Lead": 5000, "Senior Engineer": 4250, "Engineer": 3250,
+  "Data Engineer": 4000, "AI/ML Engineer": 4750, "QA Engineer": 3000, "Delivery Manager": 4500, "Business Analyst": 3500,
+};
+// Role mix per workstream category (fractions of that category's effort).
+const ROLE_MIX: Record<string, Record<string, number>> = {
+  capability:  { "Delivery Manager": 0.08, "Tech Lead": 0.15, "Senior Engineer": 0.32, "Engineer": 0.32, "Business Analyst": 0.13 },
+  integration: { "Delivery Manager": 0.08, "Tech Lead": 0.15, "Data Engineer": 0.33, "Senior Engineer": 0.32, "Engineer": 0.12 },
+  ai:          { "Solution Architect": 0.10, "AI/ML Engineer": 0.45, "Senior Engineer": 0.28, "Tech Lead": 0.17 },
+  security:    { "Solution Architect": 0.40, "Senior Engineer": 0.60 },
+  testing:     { "QA Engineer": 0.70, "Engineer": 0.30 },
+  other:       { "Data Engineer": 0.50, "Engineer": 0.50 },
+};
+const PHASE_WEIGHTS = [0.10, 0.28, 0.22, 0.18, 0.14, 0.08];
 
 /** Coverage: which included requirements are referenced by downstream outputs. */
 export function computeCoverage(s: Session, caps: Capability[], arch: Architecture | null, ai: { reqs: string[] } | null): Coverage {
@@ -29,11 +45,15 @@ export const PHASES = [
 ];
 
 export interface EstimateRow { label: string; complexity: string; weeks: number; driver: string; reqs: string[]; }
+export interface RoleLine { role: string; weeks: number; weeklyRate: number; cost: number; }
+export interface Milestone { phase: string; endWeek: number; }
 export interface Estimate {
   rows: EstimateRow[]; base: number; securityUplift: number; testingUplift: number; envUplift: number; migrationUplift: number;
-  subtotal: number; contingency: number; totalWeeks: number; cost: number; costLow: number; costHigh: number;
+  subtotal: number; contingency: number; totalWeeks: number; weeksLow: number; weeksHigh: number;
+  cost: number; costLow: number; costHigh: number;
   confidence: "High" | "Medium" | "Low"; band: number; reasons: string[]; missing: string[]; blocked: boolean;
   durationWeeks: number; cfg: EstimateConfig;
+  roles: RoleLine[]; roleCostTotal: number; milestones: Milestone[]; deliveryRisks: any[];
 }
 
 /**
@@ -82,9 +102,39 @@ export function computeEstimate(s: Session, caps: Capability[], cfg: EstimateCon
   const parallel = Math.min(cfg.teamSize, 4);
   const durationWeeks = Math.ceil(totalWeeks / parallel);
 
+  // ---- effort range (from confidence band) ----
+  const weeksLow = Math.round(totalWeeks * (1 - band / 2));
+  const weeksHigh = Math.round(totalWeeks * (1 + band / 2));
+
+  // ---- role / skill breakdown: allocate the SAME effort by role mix, then fold contingency ----
+  const capWeeks = rows.filter(r => r.label.startsWith("Capability")).reduce((a, r) => a + r.weeks, 0);
+  const intWeeks = rows.filter(r => r.label.startsWith("Integration")).reduce((a, r) => a + r.weeks, 0);
+  const aiWeeks = rows.filter(r => r.label.startsWith("AI use case")).reduce((a, r) => a + r.weeks, 0);
+  const buckets: Array<[string, number]> = [
+    ["capability", capWeeks], ["integration", intWeeks], ["ai", aiWeeks],
+    ["security", securityUplift], ["testing", testingUplift], ["other", envUplift + migrationUplift],
+  ];
+  const roleWeeks: Record<string, number> = {};
+  const scale = subtotal > 0 ? totalWeeks / subtotal : 1; // fold contingency proportionally
+  for (const [cat, w] of buckets) {
+    if (!w) continue;
+    for (const [role, frac] of Object.entries(ROLE_MIX[cat])) roleWeeks[role] = (roleWeeks[role] || 0) + w * frac * scale;
+  }
+  const roles: RoleLine[] = Object.entries(roleWeeks)
+    .map(([role, w]) => ({ role, weeks: Math.round(w * 10) / 10, weeklyRate: ROLE_RATES[role], cost: Math.round(w * ROLE_RATES[role]) }))
+    .filter(r => r.weeks > 0).sort((a, b) => b.weeks - a.weeks);
+  const roleCostTotal = roles.reduce((a, r) => a + r.cost, 0);
+
+  // ---- milestones (cumulative elapsed weeks per phase) ----
+  let acc = 0;
+  const milestones: Milestone[] = PHASES.map((phase, i) => { acc += durationWeeks * PHASE_WEIGHTS[i]; return { phase, endWeek: Math.max(1, Math.round(acc)) }; });
+
+  const deliveryRisks = buildRisks(s);
+
   return {
-    rows, base, securityUplift, testingUplift, envUplift, migrationUplift, subtotal, contingency, totalWeeks,
+    rows, base, securityUplift, testingUplift, envUplift, migrationUplift, subtotal, contingency, totalWeeks, weeksLow, weeksHigh,
     cost, costLow: Math.round(cost * (1 - band)), costHigh: Math.round(cost * (1 + band)),
     confidence, band, reasons, missing, blocked, durationWeeks, cfg,
+    roles, roleCostTotal, milestones, deliveryRisks,
   };
 }

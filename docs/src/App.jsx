@@ -226,7 +226,7 @@ function ReqRow({ r, setReq, delReq }) {
 function PRDStage({ ctx }) {
   const { session, pkg, setStage } = ctx;
   if (!pkg) return <Empty title="Approve the scope first">Return to Requirements and approve the reviewed scope model.</Empty>;
-  const { caps, cov } = pkg; const inc = includedReqs(session);
+  const { caps, cov, personas, journeys, prdExtras, risks } = pkg; const inc = includedReqs(session);
   const group = (t) => inc.filter(r => r.type === t);
   return <div>
     <SectionTitle sub="Generated from the approved scope model. Capabilities reference requirement IDs; the coverage view flags anything not yet organized into scope.">Product requirements &amp; functional scope</SectionTitle>
@@ -242,6 +242,36 @@ function PRDStage({ ctx }) {
             <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>{c.reqs.map(id => <IdChip key={id} id={id} />)}</div></Card>)}</div></div>
         <Card><h3 style={{ fontSize: 14, marginBottom: 8 }}>Non-functional requirements</h3>
           {group("Non-functional").length ? group("Non-functional").map(r => <div key={r.id} style={{ fontSize: 13, marginBottom: 5 }}><IdChip id={r.id} /> {r.description}</div>) : <span style={{ fontSize: 12.5, color: "var(--ink-faint)" }}>None captured — consider clarifying performance, availability and scale.</span>}</Card>
+
+        {personas.length > 0 && <Card><h3 style={{ fontSize: 14, marginBottom: 8 }}>Target users &amp; personas</h3>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(200px,1fr))", gap: 8 }}>
+            {personas.map(p => <div key={p.id} style={{ border: "1px solid var(--line)", borderRadius: 8, padding: "9px 11px" }}>
+              <div style={{ fontSize: 13, fontWeight: 600 }}>{p.name} <span style={{ fontFamily: "JetBrains Mono", fontSize: 10.5, color: "var(--ink-faint)" }}>{p.id}</span></div>
+              <div style={{ fontSize: 12, color: "var(--ink-soft)", margin: "2px 0" }}>{p.description}</div>
+              <div style={{ fontSize: 11.5, color: "var(--accent-ink)" }}>Needs: {p.needs}</div></div>)}</div></Card>}
+
+        {journeys.length > 0 && <Card><h3 style={{ fontSize: 14, marginBottom: 8 }}>User journeys</h3>
+          {journeys.map(j => <div key={j.id} style={{ marginBottom: 10 }}>
+            <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 5 }}>{j.name} <span style={{ marginLeft: 4 }}>{j.reqs.map(id => <IdChip key={id} id={id} />)}</span></div>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 4, alignItems: "center" }}>
+              {j.steps.map((s, i) => <React.Fragment key={i}><span style={{ fontSize: 11.5, background: "var(--surface-3)", borderRadius: 6, padding: "3px 8px" }}>{s}</span>{i < j.steps.length - 1 && <span style={{ color: "var(--ink-faint)" }}>→</span>}</React.Fragment>)}
+            </div></div>)}</Card>}
+
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+          <Card pad={13}><div style={{ fontSize: 12.5, fontWeight: 700, marginBottom: 6, color: "var(--inferred)" }}>Recommended enhancements</div>
+            {prdExtras.enhancements.length ? prdExtras.enhancements.map(r => <div key={r.id} style={{ fontSize: 12, marginBottom: 3 }}><IdChip id={r.id} /> {r.description}</div>) : <span style={{ fontSize: 12, color: "var(--ink-faint)" }}>None.</span>}</Card>
+          <Card pad={13}><div style={{ fontSize: 12.5, fontWeight: 700, marginBottom: 6 }}>Out of scope</div>
+            {prdExtras.outOfScope.length ? prdExtras.outOfScope.map((x, i) => <div key={i} style={{ fontSize: 12, marginBottom: 3, color: "var(--ink-soft)" }}>• {x}</div>) : <span style={{ fontSize: 12, color: "var(--ink-faint)" }}>Nothing excluded yet.</span>}</Card>
+        </div>
+
+        {prdExtras.dependencies.length > 0 && <Card pad={13}><div style={{ fontSize: 12.5, fontWeight: 700, marginBottom: 6 }}>Dependencies</div>
+          {prdExtras.dependencies.map((d, i) => <div key={i} style={{ fontSize: 12, marginBottom: 2 }}><IdChip id={d.from} /> depends on {d.to.map(t => <IdChip key={t} id={t} />)}</div>)}</Card>}
+
+        {risks.length > 0 && <Card><h3 style={{ fontSize: 14, marginBottom: 8 }}>Risks</h3>
+          {risks.map(r => <div key={r.id} style={{ display: "flex", gap: 9, alignItems: "flex-start", marginBottom: 7 }}>
+            <Chip c={PRIO[r.severity].c} b={PRIO[r.severity].b}>{r.severity}</Chip>
+            <div style={{ flex: 1 }}><div style={{ fontSize: 12.5 }}><span style={{ fontFamily: "JetBrains Mono", fontSize: 11, color: "var(--ink-faint)" }}>{r.id}</span> · <span style={{ color: "var(--ink-faint)" }}>{r.category}</span> — {r.description}</div>
+              <div style={{ fontSize: 11.5, color: "var(--ink-soft)" }}>Mitigation: {r.mitigation}{r.reqs.length ? <> · {r.reqs.map(id => <IdChip key={id} id={id} />)}</> : null}</div></div></div>)}</Card>}
       </div>
       <div style={{ display: "grid", gap: 14, position: "sticky", top: 0 }}>
         <Card><div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}><h3 style={{ fontSize: 14 }}>Requirement coverage</h3><Chip c={cov.pct >= 90 ? "var(--ok)" : "var(--warn)"} b={cov.pct >= 90 ? "var(--ok-soft)" : "var(--warn-soft)"} mono>{cov.pct}%</Chip></div>
@@ -320,6 +350,26 @@ function StrategyStage({ ctx }) {
     </div>}
 
     {tab === "integ" && <div style={{ display: "grid", gap: 12 }}>
+      <Card>
+        <div style={{ fontSize: 12, fontWeight: 700, color: "var(--ink-soft)", marginBottom: 10 }}>Integration flow</div>
+        <div style={{ display: "flex", alignItems: "stretch", gap: 10, flexWrap: "wrap" }}>
+          <div style={{ flex: "1 1 160px", background: "var(--surface-2)", border: "1px solid var(--line-strong)", borderRadius: 8, padding: "10px 12px" }}>
+            <div style={{ fontSize: 12, fontWeight: 600, marginBottom: 5 }}>External systems</div>
+            {integ.items.length ? [...new Set(integ.items.flatMap(x => x.systems.split(", ")))].map(sys => <div key={sys} style={{ fontSize: 11, color: "var(--ink-soft)" }}>• {sys}</div>) : <span style={{ fontSize: 11, color: "var(--ink-faint)" }}>none</span>}
+          </div>
+          <div style={{ display: "flex", alignItems: "center", color: "var(--ink-faint)", fontSize: 18 }}>⇄</div>
+          <div style={{ flex: "1 1 200px", background: "var(--accent-soft)", border: "1px solid var(--accent)", borderRadius: 8, padding: "10px 12px" }}>
+            <div style={{ fontSize: 12, fontWeight: 600, color: "var(--accent-ink)", marginBottom: 5 }}>Integration / orchestration layer</div>
+            {integ.items.map(x => <div key={x.id} style={{ fontSize: 11, color: "var(--ink-soft)" }}><span style={{ fontFamily: "JetBrains Mono", color: "var(--accent-ink)" }}>{x.id}</span> · {x.mode}</div>)}
+          </div>
+          <div style={{ display: "flex", alignItems: "center", color: "var(--ink-faint)", fontSize: 18 }}>→</div>
+          <div style={{ flex: "1 1 150px", background: "var(--surface-2)", border: "1px solid var(--line-strong)", borderRadius: 8, padding: "10px 12px" }}>
+            <div style={{ fontSize: 12, fontWeight: 600, marginBottom: 5 }}>Solution platform</div>
+            <div style={{ fontSize: 11, color: "var(--ink-soft)" }}>APIs · data stores · event backbone</div>
+          </div>
+        </div>
+        <div style={{ fontSize: 11, color: "var(--ink-faint)", marginTop: 8 }}>Auth via managed secrets; retries with backoff + dead-letter; per-integration monitoring.</div>
+      </Card>
       {integ.items.length ? <Card pad={0}><table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12.5 }}>
         <thead><tr style={{ textAlign: "left", color: "var(--ink-faint)" }}>{["ID", "Integration", "Mode", "Systems"].map(h => <th key={h} style={{ padding: "9px 12px", borderBottom: "1px solid var(--line)", fontSize: 11 }}>{h}</th>)}</tr></thead>
         <tbody>{integ.items.map(x => <tr key={x.id}><td style={{ padding: "9px 12px", borderBottom: "1px solid var(--line)" }}><IdChip id={x.id} /></td><td style={{ padding: "9px 12px", borderBottom: "1px solid var(--line)" }}>{x.name}</td><td style={{ padding: "9px 12px", borderBottom: "1px solid var(--line)" }}><Chip>{x.mode}</Chip></td><td style={{ padding: "9px 12px", borderBottom: "1px solid var(--line)", color: "var(--ink-soft)" }}>{x.systems}</td></tr>)}</tbody>
@@ -366,13 +416,28 @@ function EstimateStage({ ctx }) {
             <div>+ data migration … {est.migrationUplift} pw</div>
             <div style={{ borderTop: "1px solid var(--line)", paddingTop: 4, marginTop: 4 }}>subtotal … <b style={{ color: "var(--ink)" }}>{est.subtotal} pw</b></div>
             <div>+ contingency ({estCfg.contingency}%) … {est.contingency} pw</div>
-            <div style={{ borderTop: "1px solid var(--line)", paddingTop: 4, marginTop: 4, fontSize: 14 }}>total … <b style={{ color: "var(--accent-ink)" }}>{est.totalWeeks} person-weeks</b></div>
+            <div style={{ borderTop: "1px solid var(--line)", paddingTop: 4, marginTop: 4, fontSize: 14 }}>total … <b style={{ color: "var(--accent-ink)" }}>{est.totalWeeks} person-weeks</b> <span style={{ color: "var(--ink-faint)" }}>(range {est.weeksLow}–{est.weeksHigh})</span></div>
             <div style={{ marginTop: 6 }}>ROM = {est.totalWeeks} × {money(estCfg.blendedRate)}/wk = <b style={{ color: "var(--ink)" }}>{money(est.cost)}</b></div>
             <div>range (±{Math.round(est.band * 100)}%) = <b style={{ color: "var(--accent-ink)" }}>{money(est.costLow)} – {money(est.costHigh)}</b></div>
           </div></Card>
-        <Card><div style={{ fontSize: 13, fontWeight: 700, marginBottom: 8 }}>Delivery phases</div>
-          <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>{PHASES.map((p, i) => <div key={p} style={{ flex: "1 1 130px", background: "var(--surface-2)", border: "1px solid var(--line)", borderRadius: 8, padding: "8px 10px" }}><div style={{ fontFamily: "JetBrains Mono", fontSize: 11, color: "var(--accent-ink)" }}>P{i + 1}</div><div style={{ fontSize: 12 }}>{p}</div></div>)}</div>
+        <Card><div style={{ fontSize: 13, fontWeight: 700, marginBottom: 8 }}>Role / skill breakdown <span style={{ fontWeight: 400, color: "var(--ink-faint)", fontSize: 11.5 }}>(indicative allocation of {est.totalWeeks} pw)</span></div>
+          <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12.5 }}>
+            <thead><tr style={{ color: "var(--ink-faint)", textAlign: "left" }}>{["Role", "Person-weeks", "Weekly rate", "Indicative cost"].map(h => <th key={h} style={{ padding: "6px 8px", fontSize: 10.5, borderBottom: "1px solid var(--line)" }}>{h}</th>)}</tr></thead>
+            <tbody>{est.roles.map(r => <tr key={r.role}><td style={{ padding: "6px 8px", borderBottom: "1px solid var(--line)" }}>{r.role}</td><td style={{ padding: "6px 8px", borderBottom: "1px solid var(--line)", fontFamily: "JetBrains Mono" }}>{r.weeks}</td><td style={{ padding: "6px 8px", borderBottom: "1px solid var(--line)", color: "var(--ink-soft)" }}>{money(r.weeklyRate)}</td><td style={{ padding: "6px 8px", borderBottom: "1px solid var(--line)", fontFamily: "JetBrains Mono" }}>{money(r.cost)}</td></tr>)}</tbody>
+          </table>
+          <div style={{ fontSize: 11, color: "var(--ink-faint)", marginTop: 6 }}>Indicative role costing (rate card × mix); the headline ROM above uses the configured blended rate.</div></Card>
+
+        <Card><div style={{ fontSize: 13, fontWeight: 700, marginBottom: 8 }}>Delivery phases &amp; milestones</div>
+          <div style={{ display: "grid", gap: 6 }}>{est.milestones.map((m, i) => <div key={m.phase} style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <span style={{ fontFamily: "JetBrains Mono", fontSize: 11, color: "var(--accent-ink)", width: 26 }}>P{i + 1}</span>
+            <span style={{ flex: 1, fontSize: 12.5 }}>{m.phase}</span>
+            <span style={{ fontSize: 11.5, color: "var(--ink-soft)", fontFamily: "JetBrains Mono" }}>~wk {m.endWeek}</span></div>)}</div>
           <div style={{ fontSize: 12, color: "var(--ink-soft)", marginTop: 10 }}>~{est.durationWeeks} weeks elapsed with a team of {estCfg.teamSize} (up to 4 parallel workstreams).</div></Card>
+
+        {est.deliveryRisks.length > 0 && <Card><div style={{ fontSize: 13, fontWeight: 700, marginBottom: 8 }}>Delivery risks &amp; dependencies</div>
+          {est.deliveryRisks.map(r => <div key={r.id} style={{ display: "flex", gap: 9, alignItems: "flex-start", marginBottom: 6 }}>
+            <Chip c={PRIO[r.severity].c} b={PRIO[r.severity].b}>{r.severity}</Chip>
+            <div style={{ fontSize: 12, color: "var(--ink-soft)" }}><b style={{ color: "var(--ink)" }}>{r.category}.</b> {r.description}</div></div>)}</Card>}
       </div>
       <div style={{ display: "grid", gap: 14, position: "sticky", top: 0 }}>
         <Card><div style={{ fontSize: 13, fontWeight: 700, marginBottom: 12 }}>Commercial configuration</div>

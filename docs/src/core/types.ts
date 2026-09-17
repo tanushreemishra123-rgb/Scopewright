@@ -24,6 +24,9 @@ export interface Requirement {
 export interface Assumption { id: string; text: string; status: "proposed" | "confirmed" | "needs-review"; }
 export interface OpenQuestion { id: string; text: string; resolved: boolean; answer: string; }
 export interface AiUseCase { id: string; title: string; reqs: string[]; pattern: string; human: string; deterministic: string; }
+export interface Persona { id: string; name: string; description: string; needs: string; }
+export interface UserJourney { id: string; name: string; steps: string[]; reqs: string[]; }
+export interface Risk { id: string; description: string; severity: Priority; category: "Delivery" | "Technical" | "Commercial" | "Compliance"; mitigation: string; reqs: string[]; }
 
 export interface CustomerContext {
   customer: string; opportunity: string;
@@ -40,6 +43,9 @@ export interface Session {
   assumptions: Assumption[];
   openQuestions: OpenQuestion[];
   aiUseCases: AiUseCase[];
+  personas?: Persona[];
+  journeys?: UserJourney[];
+  risks?: Risk[];
   approved?: boolean;
 }
 

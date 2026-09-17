@@ -41,10 +41,10 @@ VITE_AI_MODEL=gpt-4o-mini
 - **Requirements processed** → `provider.analyze` yields a candidate analysis; `src/core/schema.ts` (`validateAnalysis`) validates IDs, required `sourceText`, enums and duplicates before it enters the model.
 - **Scope model produced & reviewed** → the `Session` (`src/core/types.ts`) holds requirements, assumptions and open questions. The Requirements stage lets you edit descriptions/priorities/classifications, exclude items, resolve questions, and **approve** — approval gates all downstream generation.
 - **Source traceability** → each requirement stores `sourceText` + `classification` (customer-stated / AI-inferred / assumed). Capabilities, architecture components, AI use cases and estimate rows store the requirement IDs they consume.
-- **PRD & functional scope** → `buildCapabilities` groups included requirements into capabilities by logical module; `computeCoverage` reports covered / uncovered / dangling references.
+- **PRD & functional scope** → `buildCapabilities` groups included requirements into capabilities by logical module; `buildPRDExtras` derives dependencies, out-of-scope items and recommended enhancements (the AI-inferred requirements); personas, user journeys and a first-class **risk model** come from the reviewed scope; `computeCoverage` reports covered / uncovered / dangling references.
 - **Cloud architecture** → `buildArchitecture(session, cloud)` maps logical components to **cloud-specific services** (`cloudMap.ts`) for AWS/Azure/GCP; every functional component references the requirements that justify it and lists rationale, trade-offs and security notes.
 - **Data / integration / AI** → `buildDataStrategy`, `buildIntegration`, `buildAI` derive strategy from the DATA/INT requirements and AI use cases; the AI recommendation includes a solution-specific framework rationale and an explicit deterministic-vs-generative boundary.
-- **Effort & ROM** → `computeEstimate` (below).
+- **Effort & ROM** → `computeEstimate` (below), including a **role/skill breakdown** (rate-card × role mix), effort **ranges**, phase **milestones**, and **delivery risks**.
 - **Change-impact** → `computeChangeImpact` returns a **new** model plus an affected/unaffected map; reviewed unaffected content is never mutated in place.
 - **Consistency & coverage** → `runQualityGate` checks high-priority coverage, uncovered requirements, dangling references, unjustified components, AI safety/eval/human-review, unresolved questions, estimation inputs and assumptions.
 - **Export** → `src/export` serializes the assembled package to Markdown, DOCX (`docx`) and print-to-PDF, each with the mandatory disclaimer.
@@ -89,7 +89,6 @@ tests/         vitest: schema, estimate, model/coverage/change-impact/quality/ex
 seed/          sample requirements, context, estimation + rate + commercial config,
                mock responses, JSON schemas, expected package structure
 docs/          ARCHITECTURE.html
-
 ```
 
 ## Seed scenarios
@@ -108,5 +107,5 @@ Covers structured-output validation, requirement traceability, coverage checks, 
 
 - Mock analysis is seeded/heuristic; the heuristic extractor for arbitrary text is deliberately simple (keyword-based) and always marks items AI-inferred for reviewer confirmation.
 - The architecture diagram is a tiered logical view (not a vendor icon diagram).
-- ROM uses a single configurable blended rate by default; a role-based rate card is provided in `seed/` for extension.
+- ROM uses a single configurable blended rate for the headline figure; a **role/skill breakdown** (in `seed/rate-card.json` and `estimate.ts`) allocates the same effort across roles as an indicative role costing.
 - PDF export uses the browser's print-to-PDF; DOCX uses the `docx` library.

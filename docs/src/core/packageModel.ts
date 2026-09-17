@@ -1,5 +1,5 @@
 import type { Session, EstimateConfig, Cloud } from "./types";
-import { buildCapabilities, buildArchitecture, buildDataStrategy, buildIntegration, buildAI, includedReqs } from "./generators";
+import { buildCapabilities, buildArchitecture, buildDataStrategy, buildIntegration, buildAI, includedReqs, buildPRDExtras, buildRisks } from "./generators";
 import { computeCoverage, computeEstimate } from "./estimate";
 import { runQualityGate } from "./quality";
 
@@ -17,6 +17,10 @@ export function assemblePackage(session: Session, cloud: Cloud | "", cfg: Estima
   const cov = computeCoverage(s, caps, arch, ai);
   const est = computeEstimate(s, caps, cfg);
   const gate = runQualityGate(s, caps, arch, ai, cov, est);
-  return { session: s, caps, arch, ai, data, integ, cov, est, gate, included: includedReqs(s), disclaimer: DISCLAIMER };
+  const prdExtras = buildPRDExtras(s);
+  const risks = buildRisks(s);
+  return { session: s, caps, arch, ai, data, integ, cov, est, gate, prdExtras, risks,
+    personas: s.personas || [], journeys: s.journeys || [],
+    included: includedReqs(s), disclaimer: DISCLAIMER };
 }
 export type ScopingPackage = ReturnType<typeof assemblePackage>;

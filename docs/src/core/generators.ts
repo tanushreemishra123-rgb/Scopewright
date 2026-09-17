@@ -124,3 +124,30 @@ export function buildAI(s: Session) {
     reqs: [...new Set(cases.flatMap(u => u.reqs))],
   };
 }
+
+/** PRD extras derived from the scope model: dependencies, out-of-scope, recommended enhancements. */
+export function buildPRDExtras(s: Session) {
+  const inc = includedReqs(s);
+  const dependencies = inc
+    .filter(r => r.dependencies && r.dependencies.length)
+    .map(r => ({ from: r.id, to: r.dependencies }));
+  const excluded = s.requirements.filter(r => r.included === false);
+  const outOfScope = [
+    ...excluded.map(r => `${r.id} — ${r.description} (excluded from scope)`),
+    ...s.assumptions.filter(a => /out of scope|remains in the existing|stays in the existing/i.test(a.text)).map(a => `${a.id} — ${a.text}`),
+  ];
+  const enhancements = inc.filter(r => r.classification === "ai-inferred");
+  const toConfirm = inc.filter(r => r.classification === "assumed");
+  return { dependencies, outOfScope, enhancements, toConfirm };
+}
+
+/** Risks: use the reviewed risk model, or derive a minimal set from open questions. */
+export function buildRisks(s: Session) {
+  if (s.risks && s.risks.length) return s.risks;
+  return (s.openQuestions || []).slice(0, 3).map((q, i) => ({
+    id: `RISK_${String(i + 1).padStart(2, "0")}`,
+    description: `Unresolved: ${q.text}`,
+    severity: "Medium" as const, category: "Delivery" as const,
+    mitigation: "Resolve during discovery before committing scope/estimate.", reqs: [] as string[],
+  }));
+}

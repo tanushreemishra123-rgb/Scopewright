@@ -44,6 +44,20 @@ Data must stay in the EU. The platform must support SSO with the corporate Entra
     { id:"AIU_01", title:"Order-status Q&A assistant", reqs:["FR_02","DATA_01"], pattern:"RAG over order/shipment data", human:"Suggested answer, agent sends", deterministic:"Exact status lookups use direct DB queries, not the model." },
     { id:"AIU_02", title:"Customer email drafting", reqs:["FR_03","SEC_02"], pattern:"Guided generation with templates", human:"Mandatory agent approval before send", deterministic:"Order facts injected from system of record." },
   ],
+  personas: [
+    { id:"P_01", name:"Store Associate", description:"In-store staff creating and tracking customer orders at pace.", needs:"Fast order entry, live status, minimal clicks." },
+    { id:"P_02", name:"Call-centre Agent", description:"Handles inbound customer queries about orders and shipments.", needs:"WISMO answers, AI-drafted replies, escalation." },
+    { id:"P_03", name:"Delivery / IT Manager", description:"Owns integrations, compliance and operational health.", needs:"Auditability, SSO, EU residency, uptime at peak." },
+  ],
+  journeys: [
+    { id:"UJ_01", name:"Create & track an order", steps:["Associate signs in via SSO","Creates order","Order syncs to SAP + Salesforce","Tracks status to fulfilment"], reqs:["FR_01","INT_01","INT_02","SEC_02"] },
+    { id:"UJ_02", name:"Answer 'where is my order'", steps:["Agent opens query","AI drafts grounded answer from order/shipment data","Agent reviews & sends"], reqs:["FR_02","FR_03","DATA_01"] },
+  ],
+  risks: [
+    { id:"RISK_01", description:"SAP/Salesforce API readiness and rate limits are unconfirmed.", severity:"High", category:"Delivery", mitigation:"Early integration spike; confirm SLAs before Phase 3.", reqs:["INT_01","INT_02"] },
+    { id:"RISK_02", description:"Black Friday peak (500k orders/day) may exceed baseline sizing.", severity:"High", category:"Technical", mitigation:"Load model early; autoscaling + caching; peak load test.", reqs:["NFR_01"] },
+    { id:"RISK_03", description:"GDPR / EU data residency must hold across all managed services.", severity:"Medium", category:"Compliance", mitigation:"Region-pin every service; DPIA sign-off.", reqs:["DATA_01","SEC_01"] },
+  ],
 },
 {
   id: "meridian", tag: "Data & integration-heavy",
@@ -78,6 +92,19 @@ They already use Power BI and want to keep it. Historical data (10 years) must b
   aiUseCases: [
     { id:"AIU_01", title:"Natural-language reporting assistant", reqs:["FR_01","DATA_03"], pattern:"NL-to-SQL over governed semantic layer", human:"Analyst validates generated queries", deterministic:"Aggregations run in the warehouse; model only writes SQL." },
   ],
+  personas: [
+    { id:"P_01", name:"Claims Analyst", description:"Builds reports and analyses claims trends.", needs:"Self-service dashboards, trusted data, Power BI." },
+    { id:"P_02", name:"Data Governance Lead", description:"Accountable to regulators for quality and lineage.", needs:"End-to-end lineage, quality checks, PII masking." },
+  ],
+  journeys: [
+    { id:"UJ_01", name:"Nightly consolidation", steps:["Six sources extracted","Quality checks + lineage captured","Loaded to governed store","Available for reporting"], reqs:["DATA_01","DATA_03","INT_01"] },
+    { id:"UJ_02", name:"Self-service report", steps:["Analyst opens Power BI","Queries governed semantic layer","PII masked by role"], reqs:["FR_01","INT_03","SEC_01"] },
+  ],
+  risks: [
+    { id:"RISK_01", description:"Source record volumes are unknown; batch window may be exceeded.", severity:"High", category:"Technical", mitigation:"Profile volumes early; size the pipeline; confirm 4h window.", reqs:["DATA_01","NFR_01"] },
+    { id:"RISK_02", description:"Regulator lineage/audit standards not yet specified.", severity:"Medium", category:"Compliance", mitigation:"Confirm standards in discovery; design lineage to meet them.", reqs:["DATA_03"] },
+    { id:"RISK_03", description:"10-year historical migration quality/consistency.", severity:"Medium", category:"Delivery", mitigation:"Staged migration with reconciliation and validation gates.", reqs:["DATA_04"] },
+  ],
 },
 {
   id: "helio", tag: "AI-enabled solution",
@@ -108,6 +135,18 @@ It must escalate to a human when confidence is low or the topic is sensitive (ca
     { id:"AIU_01", title:"Grounded support Q&A", reqs:["FR_01","DATA_01","NFR_01"], pattern:"RAG with citation + confidence scoring", human:"Low-confidence routes to agent", deterministic:"Account facts fetched from billing API, not generated." },
     { id:"AIU_02", title:"Next-best-action suggestions", reqs:["FR_02"], pattern:"Retrieval + ranked recommendations", human:"Agent chooses the action", deterministic:"Eligibility rules enforced deterministically." },
   ],
+  personas: [
+    { id:"P_01", name:"Support Agent", description:"Handles complex or escalated customer contacts.", needs:"Grounded answers, next-best-actions, safe escalation." },
+    { id:"P_02", name:"Self-service Customer", description:"Wants quick answers on billing and plans.", needs:"Accurate, fast, honest 'I don't know' with hand-off." },
+  ],
+  journeys: [
+    { id:"UJ_01", name:"Grounded billing answer", steps:["Customer asks a billing question","Assistant retrieves KB + account data","Confidence scored","Low confidence → agent"], reqs:["FR_01","FR_03","DATA_01","NFR_01"] },
+  ],
+  risks: [
+    { id:"RISK_01", description:"Hallucination risk on billing/account facts.", severity:"High", category:"Technical", mitigation:"Fetch facts from billing API; groundedness eval gate before launch.", reqs:["FR_01","NFR_01"] },
+    { id:"RISK_02", description:"Sensitive-topic handling (cancellations, complaints).", severity:"Medium", category:"Compliance", mitigation:"Guardrails + mandatory escalation on sensitive intents.", reqs:["FR_03","SEC_01"] },
+    { id:"RISK_03", description:"Launch-readiness target (accuracy/deflection) undefined.", severity:"Medium", category:"Delivery", mitigation:"Agree target metrics in discovery; block launch until met.", reqs:["NFR_01"] },
+  ],
 },
 {
   id: "nimbus", tag: "Important missing information",
@@ -132,5 +171,16 @@ It must escalate to a human when confidence is low or the topic is sensitive (ca
     { id:"OQ_04", text:"Expected number of patients / concurrent users?", resolved:false, answer:"" },
   ],
   aiUseCases: [],
+  personas: [
+    { id:"P_01", name:"Patient", description:"Wants to view appointments and message care team securely.", needs:"Simple, secure, accessible access." },
+    { id:"P_02", name:"Care-team Member", description:"Responds to patient messages.", needs:"Secure messaging, identity assurance." },
+  ],
+  journeys: [
+    { id:"UJ_01", name:"View appointments & message", steps:["Patient signs in","Views appointments","Sends secure message"], reqs:["FR_01","FR_02","SEC_01"] },
+  ],
+  risks: [
+    { id:"RISK_01", description:"Regulatory regime (HIPAA/GDPR) unconfirmed — drives whole security design.", severity:"High", category:"Compliance", mitigation:"Confirm regime before architecture sign-off.", reqs:["SEC_01"] },
+    { id:"RISK_02", description:"Scope, budget and timeline all undefined ('soon').", severity:"High", category:"Commercial", mitigation:"Discovery workshop to fix scope, budget and dates.", reqs:[] },
+  ],
 },
 ];
