@@ -9,7 +9,7 @@ function StrategyStage({ ctx }) {
   const { data, integ, ai } = pkg; const [tab, setTab] = useState("data");
   return <div>
     <SectionTitle sub="Coordinated strategy derived from the data, integration and AI requirements in the approved scope.">Data, integration &amp; AI strategy</SectionTitle>
-    <div style={{ display: "flex", gap: 6, marginBottom: 16 }}>{[["data", "Data strategy"], ["integ", "Integration"], ["ai", "AI solution"]].map(([k, l]) => <Btn key={k} small kind={tab === k ? "primary" : "ghost"} onClick={() => setTab(k)}>{l}</Btn>)}</div>
+    <div style={{ display: "flex", gap: 6, marginBottom: 16 }}>{[["data", "Plan the data flow"], ["integ", "Integration architecture"], ["ai", "Select the AI approach"]].map(([k, l]) => <Btn key={k} small kind={tab === k ? "primary" : "ghost"} onClick={() => setTab(k)}>{l}</Btn>)}</div>
 
     {tab === "data" && <div style={{ display: "grid", gap: 12 }}>
       <Card><div style={{ fontSize: 13, fontWeight: 700, marginBottom: 8 }}>Data domains</div><div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>{data.domains.map(d => <Chip key={d}>{d}</Chip>)}</div><div style={{ marginTop: 6, fontSize: 11.5, color: "var(--ink-faint)" }}>Traces to {data.reqs.map(id => <IdChip key={id} id={id} />)}</div></Card>

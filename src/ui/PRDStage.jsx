@@ -10,7 +10,7 @@ function PRDStage({ ctx }) {
   const { caps, cov, personas, journeys, prdExtras, risks } = pkg; const inc = includedReqs(session);
   const group = (t) => inc.filter(r => r.type === t);
   return <div>
-    <SectionTitle sub="Generated from the approved scope model. Capabilities reference requirement IDs; the coverage view flags anything not yet organized into scope.">Product requirements &amp; functional scope</SectionTitle>
+    <SectionTitle sub="Generated from the approved scope model. Capabilities reference requirement IDs; the coverage view flags anything not yet organized into scope.">Generate the PRD &amp; functional scope</SectionTitle>
     <div style={{ display: "grid", gridTemplateColumns: "1.4fr .9fr", gap: 16, alignItems: "start" }}>
       <div style={{ display: "grid", gap: 14 }}>
         <Card><h3 style={{ fontSize: 15, marginBottom: 6 }}>Overview</h3>

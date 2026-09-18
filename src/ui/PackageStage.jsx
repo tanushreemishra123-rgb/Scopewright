@@ -15,7 +15,7 @@ function PackageStage({ ctx }) {
   return <div>
     <SectionTitle sub="Change a key input to see exactly which outputs are affected — reviewed, unaffected content is preserved. Then run the quality gate before export.">Validate &amp; prepare the scoping package</SectionTitle>
     <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, alignItems: "start" }}>
-      <Card><div style={{ fontSize: 13, fontWeight: 700, marginBottom: 10 }}>Change-impact analysis</div>
+      <Card><div style={{ fontSize: 13, fontWeight: 700, marginBottom: 10 }}>Review change impact</div>
         <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 12 }}>
           <Btn small kind="soft" onClick={() => applyChange("users")}>User volume ×10</Btn>
           <Btn small kind="soft" onClick={() => applyChange("cloud")}>Switch cloud</Btn>
@@ -30,7 +30,7 @@ function PackageStage({ ctx }) {
           <div style={{ fontSize: 11.5, color: "var(--ink-faint)", marginTop: 8 }}>Affected outputs above have already recalculated from the shared model.</div></div>
           : <div style={{ fontSize: 12.5, color: "var(--ink-faint)" }}>Apply a change to see the impact map.</div>}
       </Card>
-      <Card><div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}><span style={{ fontSize: 13, fontWeight: 700 }}>Pre-export quality gate</span><Chip c={gate.status === "Ready to export" ? "var(--ok)" : gate.status === "Blocked" ? "var(--bad)" : "var(--warn)"} b={gate.status === "Ready to export" ? "var(--ok-soft)" : gate.status === "Blocked" ? "var(--bad-soft)" : "var(--warn-soft)"}>{gate.status}</Chip></div>
+      <Card><div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}><span style={{ fontSize: 13, fontWeight: 700 }}>Validate requirement coverage &amp; quality gate</span><Chip c={gate.status === "Ready to export" ? "var(--ok)" : gate.status === "Blocked" ? "var(--bad)" : "var(--warn)"} b={gate.status === "Ready to export" ? "var(--ok-soft)" : gate.status === "Blocked" ? "var(--bad-soft)" : "var(--warn-soft)"}>{gate.status}</Chip></div>
         <div style={{ display: "grid", gap: 6 }}>{gate.checks.map((c, i) => <div key={i} style={{ display: "flex", gap: 9, alignItems: "flex-start", fontSize: 12.3 }}><span style={{ color: c.ok ? "var(--ok)" : "var(--warn)", fontWeight: 700, marginTop: 1 }}>{c.ok ? "✓" : "!"}</span><div><div style={{ fontWeight: 600 }}>{c.label}</div><div style={{ color: "var(--ink-soft)", fontSize: 11.8 }}>{c.detail}</div></div></div>)}</div>
       </Card>
     </div>

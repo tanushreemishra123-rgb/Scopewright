@@ -46,7 +46,7 @@ function RequirementsStage({ ctx }) {
               <option value="needs-review">needs review</option><option value="confirmed">confirmed</option><option value="proposed">proposed</option></select></div></div>)}
       </Card>
       <Card>
-        <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 10 }}>Clarification questions</div>
+        <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 10 }}>Clarify missing information</div>
         {session.openQuestions.map(q => <div key={q.id} style={{ marginBottom: 10 }}>
           <div style={{ display: "flex", gap: 8, alignItems: "flex-start" }}>
             <input type="checkbox" checked={q.resolved} onChange={e => update({ openQuestions: session.openQuestions.map(x => x.id === q.id ? { ...x, resolved: e.target.checked } : x) })} style={{ marginTop: 3 }} />
