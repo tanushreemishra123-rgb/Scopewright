@@ -13,6 +13,19 @@ export function buildMarkdown(pkg: ScopingPackage): string {
   p(`Customer: **${s.context.customer}**. Opportunity: ${s.context.opportunity}.`);
   p(`Scope: ${caps.length} capabilities, ${included.filter(r => r.type === "Integration").length} integrations, ${(s.aiUseCases || []).length} AI use case(s). Estimated effort **${est.totalWeeks} person-weeks** (~${est.durationWeeks} weeks elapsed with a team of ${est.cfg.teamSize}). ROM: **${money(est.costLow)}–${money(est.costHigh)}** (${est.confidence} confidence). Requirement coverage: **${cov.pct}%**. Export status: **${gate.status}**.`);
 
+  // ---- Grounding & sources (information hierarchy) ----
+  const nStated = included.filter(r => r.classification === "customer-stated").length;
+  const nInferred = included.filter(r => r.classification === "ai-inferred").length;
+  const nAssumed = included.filter(r => r.classification === "assumed").length;
+  const nConfirmed = (s.assumptions || []).filter(a => a.status === "confirmed").length;
+  const nReview = (s.assumptions || []).filter(a => a.status === "needs-review").length;
+  const nOpen = (s.openQuestions || []).filter(q => !q.resolved).length;
+  p(`\n## Grounding & sources`);
+  p(`Outputs are grounded in a clear information hierarchy:`);
+  p(`- **Primary — customer requirements:** ${nStated} of ${included.length} requirements are customer-stated, each traceable to source text.`);
+  p(`- **Secondary — user-reviewed assumptions & configuration:** ${(s.assumptions || []).length} assumptions (${nConfirmed} confirmed, ${nReview} need review); config — cloud ${s.context.cloud ? CLOUDS[s.context.cloud as keyof typeof CLOUDS] || s.context.cloud : "not selected"}, rate ${money(est.cfg.blendedRate)}/wk, contingency ${est.cfg.contingency}%, currency ${est.cfg.currency}.`);
+  p(`- **AI-generated recommendations (clearly labeled):** ${nInferred} AI-inferred and ${nAssumed} assumed requirement(s); ${nOpen} unresolved clarification question(s) record gaps rather than inventing facts.`);
+
   p(`\n## Requirements (${included.length})`);
   p(`| ID | Type | Priority | Source class | Description |\n|---|---|---|---|---|`);
   included.forEach(r => p(`| ${r.id} | ${r.type} | ${r.priority} | ${r.classification} | ${r.description} |`));

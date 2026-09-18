@@ -90,5 +90,7 @@ describe("integrated package + export", () => {
     expect(md).toContain("not a final quote");
     expect(md).toMatch(/FR_01/);
     expect(md).toMatch(/ROM =/);
+    expect(md).toContain("Grounding & sources");
+    expect(md).toMatch(/customer-stated/);
   });
 });

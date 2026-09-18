@@ -164,6 +164,15 @@ function RequirementsStage({ ctx }) {
       </div>
     </div>
 
+    <Card pad={13} style={{ marginBottom: 16, background: "var(--surface-2)" }}>
+      <div style={{ fontSize: 11.5, fontWeight: 700, letterSpacing: ".03em", textTransform: "uppercase", color: "var(--ink-faint)", marginBottom: 8 }}>Grounding hierarchy — every output traces to one of these labeled layers</div>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(210px,1fr))", gap: 10, fontSize: 12 }}>
+        <div style={{ display: "flex", gap: 8 }}><span style={{ width: 10, height: 10, borderRadius: 3, background: "var(--stated)", marginTop: 3, flexShrink: 0 }} /><div><b>1 · Customer-stated</b><div style={{ color: "var(--ink-soft)" }}>Directly from the customer's text (primary source; keeps its source reference).</div></div></div>
+        <div style={{ display: "flex", gap: 8 }}><span style={{ width: 10, height: 10, borderRadius: 3, background: "var(--accent)", marginTop: 3, flexShrink: 0 }} /><div><b>2 · Reviewed assumptions &amp; config</b><div style={{ color: "var(--ink-soft)" }}>User-set and status-tracked; unreviewed items reduce estimate confidence.</div></div></div>
+        <div style={{ display: "flex", gap: 8 }}><span style={{ width: 10, height: 10, borderRadius: 3, background: "var(--inferred)", marginTop: 3, flexShrink: 0 }} /><div><b>3 · AI-inferred / Assumed</b><div style={{ color: "var(--ink-soft)" }}>AI recommendations, clearly labeled; gaps become clarification questions, not silent facts.</div></div></div>
+      </div>
+    </Card>
+
     {Object.entries(byType).map(([type, rs]) => <div key={type} style={{ marginBottom: 16 }}>
       <div style={{ fontSize: 12, fontWeight: 700, color: "var(--ink-soft)", margin: "6px 2px 8px" }}>{type} · {rs.length}</div>
       <div style={{ display: "grid", gap: 8 }}>{rs.map(r => <ReqRow key={r.id} r={r} setReq={setReq} delReq={delReq} />)}</div>

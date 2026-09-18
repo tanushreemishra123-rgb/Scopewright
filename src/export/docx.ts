@@ -19,6 +19,16 @@ export async function buildDocxBlob(pkg: ScopingPackage): Promise<Blob> {
   kids.push(P(`Customer: ${s.context.customer}. Opportunity: ${s.context.opportunity}.`));
   kids.push(P(`Effort ${est.totalWeeks} person-weeks; ROM ${money(est.costLow)}–${money(est.costHigh)} (${est.confidence} confidence). Coverage ${cov.pct}%. Status: ${gate.status}.`));
 
+  const nStated = included.filter(r => r.classification === "customer-stated").length;
+  const nInferred = included.filter(r => r.classification === "ai-inferred").length;
+  const nAssumed = included.filter(r => r.classification === "assumed").length;
+  const nReview = (s.assumptions || []).filter(a => a.status === "needs-review").length;
+  const nOpen = (s.openQuestions || []).filter(q => !q.resolved).length;
+  kids.push(H("Grounding & sources"));
+  kids.push(B(`Primary — customer requirements: ${nStated} of ${included.length} are customer-stated, each traceable to source text.`));
+  kids.push(B(`Secondary — user-reviewed assumptions & configuration: ${(s.assumptions || []).length} assumptions (${nReview} need review); cloud, rate, contingency and currency are user-set.`));
+  kids.push(B(`AI-generated recommendations (labeled): ${nInferred} AI-inferred, ${nAssumed} assumed; ${nOpen} unresolved clarification question(s) record gaps.`));
+
   kids.push(H("Requirements"));
   included.forEach(r => kids.push(B(`${r.id} [${r.type}/${r.priority}/${r.classification}] ${r.description}`)));
 
