@@ -32,7 +32,7 @@ export default function App() {
   const [estCfg, setEstCfg] = useState(DEFAULT_EST);
   const [nav, setNav] = useState(true);
 
-  useEffect(() => { try { const raw = localStorage.getItem("scopewright"); if (raw) { const d = JSON.parse(raw); if (d.session) { setSession(d.session); setStage(d.stage || "requirements"); setCloud(d.cloud || ""); setEstCfg(d.estCfg || DEFAULT_EST); } } } catch (e) {} }, []);
+  useEffect(() => { try { const raw = localStorage.getItem("scopewright"); if (raw) { const d = JSON.parse(raw); if (d.session) { setSession(d.session); setStage(d.stage || "requirements"); setCloud(d.cloud || ""); setEstCfg({ ...DEFAULT_EST, ...(d.estCfg || {}) }); } } } catch (e) {} }, []);
   useEffect(() => { try { localStorage.setItem("scopewright", JSON.stringify({ session, stage, cloud, estCfg })); } catch (e) {} }, [session, stage, cloud, estCfg]);
 
   const pkg = useMemo(() => (session && session.approved) ? assemblePackage(session, cloud, estCfg) : null, [session, cloud, estCfg]);

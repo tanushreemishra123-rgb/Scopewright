@@ -16,7 +16,7 @@ function EstimateStage({ ctx }) {
       <div style={{ display: "grid", gap: 14 }}>
         <Card pad={0}><table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12.5 }}>
           <thead><tr style={{ color: "var(--ink-faint)", textAlign: "left" }}>{["Workstream", "Complexity", "Person-weeks", "Driver"].map(h => <th key={h} style={{ padding: "9px 12px", fontSize: 11, borderBottom: "1px solid var(--line)" }}>{h}</th>)}</tr></thead>
-          <tbody>{est.rows.map((r, i) => <tr key={i}><td style={{ padding: "8px 12px", borderBottom: "1px solid var(--line)" }}>{r.label}</td><td style={{ padding: "8px 12px", borderBottom: "1px solid var(--line)" }}><Chip c={PRIO[r.complexity].c} b={PRIO[r.complexity].b}>{r.complexity}</Chip></td><td style={{ padding: "8px 12px", borderBottom: "1px solid var(--line)", fontFamily: "JetBrains Mono", fontWeight: 600 }}>{r.weeks}</td><td style={{ padding: "8px 12px", borderBottom: "1px solid var(--line)", color: "var(--ink-soft)" }}>{r.driver}</td></tr>)}</tbody>
+          <tbody>{est.rows.map((r, i) => <tr key={i}><td style={{ padding: "8px 12px", borderBottom: "1px solid var(--line)" }}>{r.label}</td><td style={{ padding: "8px 12px", borderBottom: "1px solid var(--line)" }}><Chip c={PRIO[r.complexity].c} b={PRIO[r.complexity].b}>{r.complexity}</Chip></td><td style={{ padding: "8px 12px", borderBottom: "1px solid var(--line)", fontFamily: "JetBrains Mono", fontWeight: 600 }}>{r.weeks} <span style={{ color: "var(--ink-faint)", fontWeight: 400 }}>({r.weeksLow}–{r.weeksHigh})</span></td><td style={{ padding: "8px 12px", borderBottom: "1px solid var(--line)", color: "var(--ink-soft)" }}>{r.driver}</td></tr>)}</tbody>
         </table></Card>
         <Card><div style={{ fontSize: 13, fontWeight: 700, marginBottom: 10 }}>Calculation (reproducible)</div>
           <div className="mono" style={{ fontSize: 12.5, lineHeight: 1.9, color: "var(--ink-soft)" }}>
@@ -25,6 +25,8 @@ function EstimateStage({ ctx }) {
             <div>+ testing &amp; hardening (15%) … {est.testingUplift} pw</div>
             <div>+ environments ({estCfg.environments}) … {est.envUplift} pw</div>
             <div>+ data migration … {est.migrationUplift} pw</div>
+            <div>+ cloud complexity ({estCfg.cloudComplexity}) … {est.cloudUplift} pw</div>
+            <div>× productivity factor ({estCfg.productivity.toFixed(2)}) … {est.productivityUplift >= 0 ? "+" : ""}{est.productivityUplift} pw</div>
             <div style={{ borderTop: "1px solid var(--line)", paddingTop: 4, marginTop: 4 }}>subtotal … <b style={{ color: "var(--ink)" }}>{est.subtotal} pw</b></div>
             <div>+ contingency ({estCfg.contingency}%) … {est.contingency} pw</div>
             <div style={{ borderTop: "1px solid var(--line)", paddingTop: 4, marginTop: 4, fontSize: 14 }}>total … <b style={{ color: "var(--accent-ink)" }}>{est.totalWeeks} person-weeks</b> <span style={{ color: "var(--ink-faint)" }}>(range {est.weeksLow}–{est.weeksHigh})</span></div>
@@ -43,12 +45,19 @@ function EstimateStage({ ctx }) {
             <span style={{ fontFamily: "JetBrains Mono", fontSize: 11, color: "var(--accent-ink)", width: 26 }}>P{i + 1}</span>
             <span style={{ flex: 1, fontSize: 12.5 }}>{m.phase}</span>
             <span style={{ fontSize: 11.5, color: "var(--ink-soft)", fontFamily: "JetBrains Mono" }}>~wk {m.endWeek}</span></div>)}</div>
-          <div style={{ fontSize: 12, color: "var(--ink-soft)", marginTop: 10 }}>~{est.durationWeeks} weeks elapsed with a team of {estCfg.teamSize} (up to 4 parallel workstreams).</div></Card>
+          <div style={{ fontSize: 12, color: "var(--ink-soft)", marginTop: 10 }}>Timeline ~{est.durationLow}–{est.durationHigh} weeks elapsed (nominal {est.durationWeeks}) with a team of {estCfg.teamSize}, up to 4 parallel workstreams.</div></Card>
 
         {est.deliveryRisks.length > 0 && <Card><div style={{ fontSize: 13, fontWeight: 700, marginBottom: 8 }}>Delivery risks &amp; dependencies</div>
           {est.deliveryRisks.map(r => <div key={r.id} style={{ display: "flex", gap: 9, alignItems: "flex-start", marginBottom: 6 }}>
             <Chip c={PRIO[r.severity].c} b={PRIO[r.severity].b}>{r.severity}</Chip>
             <div style={{ fontSize: 12, color: "var(--ink-soft)" }}><b style={{ color: "var(--ink)" }}>{r.category}.</b> {r.description}</div></div>)}</Card>}
+
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+          <Card pad={13}><div style={{ fontSize: 12.5, fontWeight: 700, marginBottom: 6 }}>Assumptions</div>
+            {pkg.session.assumptions.length ? pkg.session.assumptions.map(a => <div key={a.id} style={{ fontSize: 12, marginBottom: 4, color: "var(--ink-soft)" }}>{a.id}: {a.text} <span style={{ color: a.status === "confirmed" ? "var(--ok)" : "var(--warn)", fontSize: 11 }}>({a.status})</span></div>) : <span style={{ fontSize: 12, color: "var(--ink-faint)" }}>None.</span>}</Card>
+          <Card pad={13}><div style={{ fontSize: 12.5, fontWeight: 700, marginBottom: 6 }}>Delivery dependencies</div>
+            {pkg.prdExtras.dependencies.length ? pkg.prdExtras.dependencies.map((d, i) => <div key={i} style={{ fontSize: 12, marginBottom: 3, color: "var(--ink-soft)" }}>{d.from} → {d.to.join(", ")}</div>) : <span style={{ fontSize: 12, color: "var(--ink-faint)" }}>No cross-requirement dependencies.</span>}</Card>
+        </div>
       </div>
       <div style={{ display: "grid", gap: 14, position: "sticky", top: 0 }}>
         <Card><div style={{ fontSize: 13, fontWeight: 700, marginBottom: 12 }}>Commercial configuration</div>
@@ -57,11 +66,14 @@ function EstimateStage({ ctx }) {
           <Field label={`Contingency: ${estCfg.contingency}%`}><input type="range" min="0" max="40" value={estCfg.contingency} onChange={e => set("contingency", +e.target.value)} style={{ width: "100%" }} /></Field>
           <Field label={`Team size: ${estCfg.teamSize}`}><input type="range" min="2" max="14" value={estCfg.teamSize} onChange={e => set("teamSize", +e.target.value)} style={{ width: "100%" }} /></Field>
           <Field label={`Environments: ${estCfg.environments}`}><input type="range" min="1" max="4" value={estCfg.environments} onChange={e => set("environments", +e.target.value)} style={{ width: "100%" }} /></Field>
+          <Field label="Cloud infrastructure complexity"><select value={estCfg.cloudComplexity} onChange={e => set("cloudComplexity", e.target.value)} style={inp}><option>Low</option><option>Medium</option><option>High</option></select></Field>
+          <Field label={`Productivity factor: ×${estCfg.productivity.toFixed(2)}`}><input type="range" min="0.8" max="1.3" step="0.05" value={estCfg.productivity} onChange={e => set("productivity", +e.target.value)} style={{ width: "100%" }} /></Field>
           <label style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 12.5, marginTop: 6 }}><input type="checkbox" checked={estCfg.dataMigration} onChange={e => set("dataMigration", e.target.checked)} /> Data migration required (+8 pw)</label>
         </Card>
         <Card style={{ borderColor: est.confidence === "High" ? "var(--ok-soft)" : est.confidence === "Low" ? "var(--bad-soft)" : "var(--warn-soft)" }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}><span style={{ fontSize: 13, fontWeight: 700 }}>Confidence</span><Chip c={est.confidence === "High" ? "var(--ok)" : est.confidence === "Low" ? "var(--bad)" : "var(--warn)"} b={est.confidence === "High" ? "var(--ok-soft)" : est.confidence === "Low" ? "var(--bad-soft)" : "var(--warn-soft)"}>{est.confidence}</Chip></div>
           {est.reasons.length > 0 && <ul style={{ margin: "8px 0 0", paddingLeft: 16, fontSize: 12, color: "var(--ink-soft)" }}>{est.reasons.map((r, i) => <li key={i}>{r}</li>)}</ul>}
+          <div style={{ fontSize: 11.5, color: "var(--ink-faint)", marginTop: 8 }}><b>Confidence limitation:</b> {est.limitation}</div>
           {est.missing.length > 0 && <div style={{ marginTop: 8, padding: 8, background: "var(--bad-soft)", borderRadius: 7, fontSize: 12, color: "var(--bad)" }}><b>Missing inputs:</b> {est.missing.join("; ")}. ROM flagged low-confidence.</div>}
         </Card>
         <Btn onClick={() => setStage("package")}>Validate &amp; package →</Btn>

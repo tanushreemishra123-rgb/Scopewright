@@ -74,7 +74,7 @@ export function buildMarkdown(pkg: ScopingPackage): string {
   p(`\n## Effort, timeline & ROM`);
   p(`| Item | Complexity | Person-weeks | Driver |\n|---|---|---|---|`);
   est.rows.forEach(r => p(`| ${r.label} | ${r.complexity} | ${r.weeks} | ${r.driver} |`));
-  p(`\nBase ${est.base} + security ${est.securityUplift} + testing ${est.testingUplift} + environments ${est.envUplift} + migration ${est.migrationUplift} = subtotal ${est.subtotal}; + contingency ${est.cfg.contingency}% (${est.contingency}) = **${est.totalWeeks} person-weeks** (range ${est.weeksLow}–${est.weeksHigh}).`);
+  p(`\nBase ${est.base} + security ${est.securityUplift} + testing ${est.testingUplift} + environments ${est.envUplift} + migration ${est.migrationUplift} + cloud-complexity(${est.cfg.cloudComplexity}) ${est.cloudUplift} + productivity(×${est.cfg.productivity.toFixed(2)}) ${est.productivityUplift} = subtotal ${est.subtotal}; + contingency ${est.cfg.contingency}% (${est.contingency}) = **${est.totalWeeks} person-weeks** (range ${est.weeksLow}–${est.weeksHigh}). Timeline ~${est.durationLow}–${est.durationHigh} weeks.`);
   p(`ROM = ${est.totalWeeks} × ${money(est.cfg.blendedRate)}/wk = ${money(est.cost)} (±${Math.round(est.band * 100)}%): **${money(est.costLow)}–${money(est.costHigh)}**. Confidence **${est.confidence}**${est.reasons.length ? ` (${est.reasons.join("; ")})` : ""}.`);
 
   p(`\n### Role / skill breakdown (indicative allocation of ${est.totalWeeks} pw)`);

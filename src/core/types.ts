@@ -56,6 +56,8 @@ export interface Architecture { cloud: Cloud; components: ArchComponent[]; }
 export interface EstimateConfig {
   blendedRate: number; currency: string; contingency: number;
   teamSize: number; weeklyHours: number; environments: number; dataMigration: boolean;
+  productivity: number;                         // effort multiplier delta (1.0 = baseline)
+  cloudComplexity: "Low" | "Medium" | "High";   // cloud-infrastructure complexity
 }
 
 export interface Coverage { total: number; covered: number; uncovered: Requirement[]; dangling: string[]; pct: number; }

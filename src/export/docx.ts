@@ -69,7 +69,7 @@ export async function buildDocxBlob(pkg: ScopingPackage): Promise<Blob> {
 
   kids.push(H("Effort, timeline & ROM"));
   est.rows.forEach(r => kids.push(B(`${r.label} — ${r.complexity} — ${r.weeks} pw (${r.driver})`)));
-  kids.push(P(`Subtotal ${est.subtotal} + contingency ${est.cfg.contingency}% = ${est.totalWeeks} person-weeks (range ${est.weeksLow}–${est.weeksHigh}). ROM ${money(est.costLow)}–${money(est.costHigh)}.`));
+  kids.push(P(`Subtotal ${est.subtotal} (incl. cloud-complexity ${est.cloudUplift}, productivity ${est.productivityUplift}) + contingency ${est.cfg.contingency}% = ${est.totalWeeks} person-weeks (range ${est.weeksLow}–${est.weeksHigh}); timeline ~${est.durationLow}–${est.durationHigh} weeks. ROM ${money(est.costLow)}–${money(est.costHigh)}. Confidence ${est.confidence} — ${est.limitation}.`));
   kids.push(H("Role / skill breakdown", HeadingLevel.HEADING_2));
   est.roles.forEach(r => kids.push(B(`${r.role}: ${r.weeks} pw @ ${money(r.weeklyRate)}/wk = ${money(r.cost)}`)));
   kids.push(H("Delivery phases & milestones", HeadingLevel.HEADING_2));

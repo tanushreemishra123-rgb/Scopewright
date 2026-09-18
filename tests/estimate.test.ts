@@ -18,7 +18,7 @@ describe("effort & ROM estimation", () => {
   it("total = subtotal + contingency, and subtotal sums its parts", () => {
     const s = orion(); const caps = buildCapabilities(s);
     const e = computeEstimate({ ...s, context: { ...s.context, cloud: "aws" } }, caps, DEFAULT_EST);
-    expect(e.subtotal).toBe(e.base + e.securityUplift + e.testingUplift + e.envUplift + e.migrationUplift);
+    expect(e.subtotal).toBe(e.base + e.securityUplift + e.testingUplift + e.envUplift + e.migrationUplift + e.cloudUplift + e.productivityUplift);
     expect(e.totalWeeks).toBe(e.subtotal + e.contingency);
     expect(e.cost).toBe(e.totalWeeks * DEFAULT_EST.blendedRate);
   });

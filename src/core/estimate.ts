@@ -33,7 +33,9 @@ export function computeCoverage(s: Session, caps: Capability[], arch: Architectu
 
 export const DEFAULT_EST: EstimateConfig = {
   blendedRate: 4200, currency: "EUR", contingency: 20, teamSize: 6, weeklyHours: 38, environments: 3, dataMigration: false,
+  productivity: 1.0, cloudComplexity: "Medium",
 };
+const CLOUD_COMPLEXITY_PCT: Record<string, number> = { Low: 0, Medium: 0.05, High: 0.10 };
 export const EFFORT = {
   capability: { Low: 3, Medium: 6, High: 10 } as Record<string, number>,
   integration: { Low: 2, Medium: 4, High: 6 } as Record<string, number>,
@@ -44,15 +46,16 @@ export const PHASES = [
   "AI Capabilities", "Testing & Hardening", "Deployment & Handover",
 ];
 
-export interface EstimateRow { label: string; complexity: string; weeks: number; driver: string; reqs: string[]; }
+export interface EstimateRow { label: string; complexity: string; weeks: number; weeksLow: number; weeksHigh: number; driver: string; reqs: string[]; }
 export interface RoleLine { role: string; weeks: number; weeklyRate: number; cost: number; }
 export interface Milestone { phase: string; endWeek: number; }
 export interface Estimate {
   rows: EstimateRow[]; base: number; securityUplift: number; testingUplift: number; envUplift: number; migrationUplift: number;
+  productivityUplift: number; cloudUplift: number;
   subtotal: number; contingency: number; totalWeeks: number; weeksLow: number; weeksHigh: number;
   cost: number; costLow: number; costHigh: number;
-  confidence: "High" | "Medium" | "Low"; band: number; reasons: string[]; missing: string[]; blocked: boolean;
-  durationWeeks: number; cfg: EstimateConfig;
+  confidence: "High" | "Medium" | "Low"; band: number; reasons: string[]; limitation: string; missing: string[]; blocked: boolean;
+  durationWeeks: number; durationLow: number; durationHigh: number; cfg: EstimateConfig;
   roles: RoleLine[]; roleCostTotal: number; milestones: Milestone[]; deliveryRisks: any[];
 }
 
@@ -83,7 +86,9 @@ export function computeEstimate(s: Session, caps: Capability[], cfg: EstimateCon
   const testingUplift = Math.round(base * 0.15);
   const envUplift = Math.max(0, cfg.environments - 1) * 2;
   const migrationUplift = cfg.dataMigration ? 8 : 0;
-  const subtotal = base + securityUplift + testingUplift + envUplift + migrationUplift;
+  const productivityUplift = Math.round(base * (cfg.productivity - 1));           // productivity factor
+  const cloudUplift = Math.round(base * (CLOUD_COMPLEXITY_PCT[cfg.cloudComplexity] || 0)); // cloud infra complexity
+  const subtotal = base + securityUplift + testingUplift + envUplift + migrationUplift + productivityUplift + cloudUplift;
   const contingency = Math.round(subtotal * cfg.contingency / 100);
   const totalWeeks = subtotal + contingency;
   const cost = totalWeeks * cfg.blendedRate;
@@ -97,14 +102,20 @@ export function computeEstimate(s: Session, caps: Capability[], cfg: EstimateCon
   const missing: string[] = [];
   if (!s.context || !s.context.cloud) missing.push("Cloud platform not selected");
   if (!cfg.blendedRate) missing.push("Blended rate not configured");
+  if (missing.length) reasons.push(...missing);
   const blocked = missing.length > 0;
+  const limitation = reasons.length ? reasons.join("; ") : "No major limitations noted; inputs complete.";
 
   const parallel = Math.min(cfg.teamSize, 4);
   const durationWeeks = Math.ceil(totalWeeks / parallel);
 
-  // ---- effort range (from confidence band) ----
+  // ---- effort range (from confidence band): total + per workstream row ----
   const weeksLow = Math.round(totalWeeks * (1 - band / 2));
   const weeksHigh = Math.round(totalWeeks * (1 + band / 2));
+  rows.forEach(r => { r.weeksLow = Math.max(1, Math.round(r.weeks * (1 - band / 2))); r.weeksHigh = Math.round(r.weeks * (1 + band / 2)); });
+  // ---- timeline range ----
+  const durationLow = Math.ceil(weeksLow / parallel);
+  const durationHigh = Math.ceil(weeksHigh / parallel);
 
   // ---- role / skill breakdown: allocate the SAME effort by role mix, then fold contingency ----
   const capWeeks = rows.filter(r => r.label.startsWith("Capability")).reduce((a, r) => a + r.weeks, 0);
@@ -115,7 +126,8 @@ export function computeEstimate(s: Session, caps: Capability[], cfg: EstimateCon
     ["security", securityUplift], ["testing", testingUplift], ["other", envUplift + migrationUplift],
   ];
   const roleWeeks: Record<string, number> = {};
-  const scale = subtotal > 0 ? totalWeeks / subtotal : 1; // fold contingency proportionally
+  const bucketSum = buckets.reduce((a, [, w]) => a + w, 0);
+  const scale = bucketSum > 0 ? totalWeeks / bucketSum : 1; // allocate full total (incl. contingency + all uplifts) across roles
   for (const [cat, w] of buckets) {
     if (!w) continue;
     for (const [role, frac] of Object.entries(ROLE_MIX[cat])) roleWeeks[role] = (roleWeeks[role] || 0) + w * frac * scale;
@@ -132,9 +144,10 @@ export function computeEstimate(s: Session, caps: Capability[], cfg: EstimateCon
   const deliveryRisks = buildRisks(s);
 
   return {
-    rows, base, securityUplift, testingUplift, envUplift, migrationUplift, subtotal, contingency, totalWeeks, weeksLow, weeksHigh,
+    rows, base, securityUplift, testingUplift, envUplift, migrationUplift, productivityUplift, cloudUplift,
+    subtotal, contingency, totalWeeks, weeksLow, weeksHigh,
     cost, costLow: Math.round(cost * (1 - band)), costHigh: Math.round(cost * (1 + band)),
-    confidence, band, reasons, missing, blocked, durationWeeks, cfg,
+    confidence, band, reasons, limitation, missing, blocked, durationWeeks, durationLow, durationHigh, cfg,
     roles, roleCostTotal, milestones, deliveryRisks,
   };
 }
