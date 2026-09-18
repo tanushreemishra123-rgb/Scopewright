@@ -1,0 +1,46 @@
+name: SAST (OpenGrep)
+
+# Runs the same kind of SAST the challenge scorecard uses, on a Linux runner
+# (avoids OpenGrep's flaky Windows CLI). Fails the job if findings are reported.
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  opengrep:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install OpenGrep
+        run: |
+          curl -fsSL https://raw.githubusercontent.com/opengrep/opengrep/main/install.sh | bash
+          echo "$HOME/.opengrep/cli/latest" >> "$GITHUB_PATH"
+
+      - name: Scan
+        run: |
+          opengrep scan \
+            --config p/security-audit \
+            --config p/owasp-top-ten \
+            --config p/javascript \
+            --config p/typescript \
+            --config p/react \
+            --error --severity ERROR \
+            --exclude node_modules --exclude dist .
+
+  # Alternative engine (drop-in, same rule packs) if you prefer Semgrep:
+  semgrep:
+    runs-on: ubuntu-latest
+    container: semgrep/semgrep
+    steps:
+      - uses: actions/checkout@v4
+      - run: |
+          semgrep scan \
+            --config p/security-audit \
+            --config p/owasp-top-ten \
+            --config p/javascript \
+            --config p/typescript \
+            --config p/react \
+            --error \
+            --exclude node_modules --exclude dist .

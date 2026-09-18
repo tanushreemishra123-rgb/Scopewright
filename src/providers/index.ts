@@ -6,7 +6,13 @@ import { validateAnalysis } from "../core/schema";
 export interface AnalyzeInput { scenarioId?: string; name?: string; text?: string; }
 export interface Provider { id: string; label: string; analyze(input: AnalyzeInput): Promise<Session>; }
 
-const uid = (p: string) => p + "_" + Math.random().toString(36).slice(2, 7);
+function uid(p: string): string {
+  const c: any = (globalThis as any).crypto;
+  const rand = c?.randomUUID
+    ? c.randomUUID().replace(/-/g, "").slice(0, 8)
+    : Array.from(c.getRandomValues(new Uint8Array(4)), (b: number) => b.toString(16).padStart(2, "0")).join("");
+  return `${p}_${rand}`;
+}
 
 function sessionFromScenario(id: string): Session {
   const sc = SCENARIOS.find(s => s.id === id);
