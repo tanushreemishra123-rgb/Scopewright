@@ -29,6 +29,16 @@ describe("PRD depth", () => {
     expect(x.dependencies.length).toBeGreaterThan(0);
     expect(x.dependencies[0]).toHaveProperty("from");
   });
+  it("each capability exposes external dependencies (not its own reqs)", () => {
+    const caps = buildCapabilities(orion());
+    for (const c of caps) {
+      expect(Array.isArray(c.dependencies)).toBe(true);
+      // a capability never lists one of its own requirement IDs as a dependency
+      for (const d of c.dependencies) expect(c.reqs).not.toContain(d);
+    }
+    // at least one capability has a real cross-capability dependency
+    expect(caps.some(c => c.dependencies.length > 0)).toBe(true);
+  });
 });
 
 describe("estimation depth", () => {

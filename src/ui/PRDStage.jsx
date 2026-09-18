@@ -16,13 +16,24 @@ function PRDStage({ ctx }) {
         <Card><h3 style={{ fontSize: 15, marginBottom: 6 }}>Overview</h3>
           <p style={{ fontSize: 13.5, color: "var(--ink-soft)", margin: "0 0 4px" }}><b style={{ color: "var(--ink)" }}>Problem.</b> {session.context.opportunity}.</p>
           <p style={{ fontSize: 13.5, color: "var(--ink-soft)", margin: 0 }}><b style={{ color: "var(--ink)" }}>Objective.</b> {group("Business").map(r => r.description).join(" ") || "Deliver the requested solution capabilities."}</p></Card>
-        <div><div style={{ fontSize: 12, fontWeight: 700, color: "var(--ink-soft)", margin: "2px 2px 8px" }}>Functional scope — capabilities</div>
+        <div><div style={{ fontSize: 12, fontWeight: 700, color: "var(--ink-soft)", margin: "2px 2px 8px" }}>Functional scope — capabilities / workstreams</div>
           <div style={{ display: "grid", gap: 9 }}>{caps.map(c => <Card key={c.name} pad={13}>
             <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 5 }}><span style={{ fontWeight: 600, fontSize: 14 }}>{c.name}</span><Chip c={PRIO[c.priority].c} b={PRIO[c.priority].b}>{c.priority}</Chip><Chip>{c.complexity} complexity</Chip></div>
             <p style={{ fontSize: 12.5, color: "var(--ink-soft)", margin: "0 0 7px" }}>{c.scope}</p>
-            <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>{c.reqs.map(id => <IdChip key={id} id={id} />)}</div></Card>)}</div></div>
+            <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>{c.reqs.map(id => <IdChip key={id} id={id} />)}</div>
+            {c.dependencies.length > 0 && <div style={{ fontSize: 11.5, color: "var(--ink-faint)", marginTop: 6 }}>Dependencies: {c.dependencies.map(id => <IdChip key={id} id={id} />)}</div>}</Card>)}</div></div>
         <Card><h3 style={{ fontSize: 14, marginBottom: 8 }}>Non-functional requirements</h3>
           {group("Non-functional").length ? group("Non-functional").map(r => <div key={r.id} style={{ fontSize: 13, marginBottom: 5 }}><IdChip id={r.id} /> {r.description}</div>) : <span style={{ fontSize: 12.5, color: "var(--ink-faint)" }}>None captured — consider clarifying performance, availability and scale.</span>}</Card>
+
+        <Card><h3 style={{ fontSize: 14, marginBottom: 8 }}>Integrations</h3>
+          {group("Integration").length ? group("Integration").map(r => <div key={r.id} style={{ fontSize: 13, marginBottom: 5 }}><IdChip id={r.id} /> {r.description}</div>) : <span style={{ fontSize: 12.5, color: "var(--ink-faint)" }}>No integrations in scope.</span>}</Card>
+
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+          <Card pad={13}><div style={{ fontSize: 12.5, fontWeight: 700, marginBottom: 6 }}>Assumptions</div>
+            {session.assumptions.length ? session.assumptions.map(a => <div key={a.id} style={{ fontSize: 12, marginBottom: 4 }}><IdChip id={a.id} /> {a.text} <span style={{ color: a.status === "confirmed" ? "var(--ok)" : "var(--warn)", fontSize: 11 }}>({a.status})</span></div>) : <span style={{ fontSize: 12, color: "var(--ink-faint)" }}>None.</span>}</Card>
+          <Card pad={13}><div style={{ fontSize: 12.5, fontWeight: 700, marginBottom: 6 }}>Open questions</div>
+            {session.openQuestions.length ? session.openQuestions.map(q => <div key={q.id} style={{ fontSize: 12, marginBottom: 4, color: q.resolved ? "var(--ink-faint)" : "var(--ink)" }}><IdChip id={q.id} /> {q.text} {q.resolved ? "✓" : ""}</div>) : <span style={{ fontSize: 12, color: "var(--ink-faint)" }}>None.</span>}</Card>
+        </div>
 
         {personas.length > 0 && <Card><h3 style={{ fontSize: 14, marginBottom: 8 }}>Target users &amp; personas</h3>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(200px,1fr))", gap: 8 }}>

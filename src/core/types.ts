@@ -49,7 +49,7 @@ export interface Session {
   approved?: boolean;
 }
 
-export interface Capability { name: string; reqs: string[]; priority: Priority; scope: string; complexity: Priority; }
+export interface Capability { name: string; reqs: string[]; priority: Priority; scope: string; complexity: Priority; dependencies: string[]; }
 export interface ArchComponent { key: string; name: string; service: string; purpose: string; rationale: string; reqIds: string[]; tradeoff: string; sec: string; }
 export interface Architecture { cloud: Cloud; components: ArchComponent[]; }
 

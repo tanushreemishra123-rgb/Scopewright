@@ -10,12 +10,18 @@ const PW = { High: 0, Medium: 1, Low: 2 } as const;
 export function buildCapabilities(s: Session): Capability[] {
   const groups: Record<string, Requirement[]> = {};
   includedReqs(s).forEach(r => { (groups[r.module || r.type] ||= []).push(r); });
-  return Object.entries(groups).map(([name, rs]) => ({
-    name, reqs: rs.map(r => r.id),
-    priority: (rs.some(r => r.priority === "High") ? "High" : rs.some(r => r.priority === "Medium") ? "Medium" : "Low") as Priority,
-    scope: `Deliver ${name.toLowerCase()} covering: ${rs.map(r => r.description.replace(/\.$/, "")).slice(0, 3).join("; ")}${rs.length > 3 ? "; …" : "."}`,
-    complexity: (rs.length >= 4 ? "High" : rs.length >= 2 ? "Medium" : "Low") as Priority,
-  })).sort((a, b) => PW[a.priority] - PW[b.priority]);
+  return Object.entries(groups).map(([name, rs]) => {
+    const reqs = rs.map(r => r.id);
+    const idSet = new Set(reqs);
+    // external dependencies = requirement dependencies that point outside this capability
+    const dependencies = [...new Set(rs.flatMap(r => r.dependencies || []))].filter(d => !idSet.has(d));
+    return {
+      name, reqs, dependencies,
+      priority: (rs.some(r => r.priority === "High") ? "High" : rs.some(r => r.priority === "Medium") ? "Medium" : "Low") as Priority,
+      scope: `Deliver ${name.toLowerCase()} covering: ${rs.map(r => r.description.replace(/\.$/, "")).slice(0, 3).join("; ")}${rs.length > 3 ? "; …" : "."}`,
+      complexity: (rs.length >= 4 ? "High" : rs.length >= 2 ? "Medium" : "Low") as Priority,
+    };
+  }).sort((a, b) => PW[a.priority] - PW[b.priority]);
 }
 
 /** Cloud-specific architecture; every functional component references the reqs that justify it. */

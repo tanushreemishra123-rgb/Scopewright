@@ -31,7 +31,7 @@ export function buildMarkdown(pkg: ScopingPackage): string {
   included.forEach(r => p(`| ${r.id} | ${r.type} | ${r.priority} | ${r.classification} | ${r.description} |`));
 
   p(`\n## Functional scope`);
-  caps.forEach(c => p(`- **${c.name}** (${c.priority}, ${c.complexity} complexity) — reqs ${c.reqs.join(", ")}. ${c.scope}`));
+  caps.forEach(c => p(`- **${c.name}** (${c.priority}, ${c.complexity} complexity) — reqs ${c.reqs.join(", ")}. ${c.scope}${c.dependencies.length ? ` _Depends on:_ ${c.dependencies.join(", ")}.` : ""}`));
 
   if (personas.length) { p(`\n## Target users & personas`); personas.forEach(pr => p(`- **${pr.name}** (${pr.id}) — ${pr.description} _Needs:_ ${pr.needs}`)); }
   if (journeys.length) { p(`\n## User journeys`); journeys.forEach(j => p(`- **${j.name}** (${j.id}, reqs ${j.reqs.join(", ")}): ${j.steps.join(" → ")}`)); }
