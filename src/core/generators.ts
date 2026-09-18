@@ -98,11 +98,15 @@ export function buildDataStrategy(s: Session) {
   return {
     domains: [...new Set(dataReqs.map(r => r.module))].concat(dataReqs.length ? [] : ["(no explicit data domains)"]),
     points: [
+      { k: "Data domains", v: ([...new Set(dataReqs.map(r => r.module))].join(", ") || "To be defined in discovery") + " — the major subject areas the platform manages." },
       { k: "Sources & ownership", v: "Systems of record identified from integration requirements; ownership confirmed per domain during discovery." },
       { k: "Ingestion", v: anyMatch(/real-?time|stream|near/i) ? "Mixed: streaming for real-time feeds + batch for bulk/historical loads." : "Batch ingestion with scheduled loads." },
-      { k: "Storage", v: "Transactional store for operational data; analytical/reporting store separated to protect OLTP performance." },
-      { k: "Quality & governance", v: anyMatch(/lineage|quality|governance/i) ? "Automated data-quality checks and lineage capture required by regulator-facing requirements." : "Baseline validation on ingest; governance to be expanded." },
+      { k: "Transactional storage", v: "Operational system-of-record store optimised for OLTP consistency and low-latency writes." },
+      { k: "Analytical storage", v: "Separate analytical/reporting store (warehouse or lakehouse) to protect OLTP performance and serve BI." },
+      { k: "Metadata & governance", v: anyMatch(/lineage|quality|governance/i) ? "Catalog, lineage capture and stewardship required by regulator-facing requirements." : "Data catalog and ownership metadata; governance to be expanded." },
+      { k: "Data quality", v: anyMatch(/quality|validation|reconcil/i) ? "Automated quality checks, validation rules and reconciliation on ingest." : "Baseline validation on ingest; rules expanded per domain." },
       { k: "Retention & privacy", v: s.requirements.some(r => /retention|gdpr|hipaa|pii|residency|eu/i.test(r.description)) ? "Retention windows and PII handling enforced per stated compliance requirements." : "Standard retention; confirm compliance scope." },
+      { k: "Reporting & analytics", v: (s.requirements.some(r => /report|dashboard|analytic|power bi|bi\b/i.test(r.description)) ? "Dashboards and self-service reporting over a governed semantic layer" : "Operational reporting") + "; access controlled by role." },
       { k: "Backup & recovery", v: "Automated backups with point-in-time recovery; DR target defined by availability NFRs." },
     ],
     reqs: dataReqs.map(r => r.id),
@@ -119,7 +123,9 @@ export function buildIntegration(s: Session) {
     })),
     concerns: [
       { k: "Authentication", v: "OAuth2 / service credentials stored in managed secrets; least-privilege scopes." },
-      { k: "Error handling & retry", v: "Idempotent operations with exponential backoff, dead-letter queues and reconciliation." },
+      { k: "Error handling", v: "Idempotent operations, dead-letter queues, and reconciliation for failed messages." },
+      { k: "Retry behavior", v: "Exponential backoff with jitter and capped attempts; poison messages routed to DLQ." },
+      { k: "File exchanges", v: ints.some(i => /file|csv|sftp|extract|batch|nightly/i.test(i.name)) ? "Batch file drops (SFTP/object storage) with checksum validation and archival." : "No file exchanges identified; add if bulk file transfer is required." },
       { k: "Monitoring", v: "Per-integration health metrics, latency and failure alerting." },
       { k: "Synchronization", v: "Change-data-capture or event-driven updates where near-real-time is required." },
     ],
@@ -130,20 +136,45 @@ export function buildIntegration(s: Session) {
 export function buildAI(s: Session) {
   const cases = s.aiUseCases || [];
   const heavy = cases.length >= 2;
+  const aiReqIds = [...new Set(cases.flatMap(u => u.reqs))];
+  const hasCompliance = s.requirements.some(r => /gdpr|hipaa|pii|residency|eu\b/i.test(r.description));
   return {
     cases,
+    // AI-specific requirements: the reviewed requirements the AI must satisfy (use-case reqs + AI-quality NFRs)
+    aiRequirements: includedReqs(s)
+      .filter(r => aiReqIds.includes(r.id) || /hallucinat|accuracy|ground|eval|confidence|latency/i.test(r.description))
+      .map(r => ({ id: r.id, text: r.description })),
     framework: heavy
       ? { name: "LangGraph (orchestration) + managed cloud LLM", why: "Multiple AI use cases with routing, tool calls and human-in-the-loop escalation benefit from an explicit stateful graph; the managed cloud model keeps data in-region and avoids paid-key lock-in for the assistant itself." }
       : { name: "Vercel AI SDK + managed cloud LLM", why: "A single, well-bounded generation use case is served well by a lightweight SDK with structured output; heavier orchestration is unwarranted." },
+    models: {
+      managed: "Cloud-managed LLM (Amazon Bedrock / Azure OpenAI / Vertex AI) — in-region, governed, no user-supplied key.",
+      open: "Open-weight model (e.g. Llama / Mistral) self-hosted where data residency, cost or offline operation dominate.",
+      why: "Managed model is the default for speed and governance; open-weight is the fallback when residency/cost outweigh convenience.",
+    },
+    orchestration: heavy
+      ? "Stateful graph with explicit nodes for retrieval, tool/API calls and human-in-the-loop escalation; each step is observable and testable."
+      : "Single linear chain via a lightweight SDK — no multi-agent orchestration warranted for one bounded use case.",
+    prompt: "Versioned prompt templates; model responses constrained to JSON schemas and validated before use (same structured-output validation as core/schema.ts); prompts and outputs logged for audit.",
+    // areas better handled deterministically than generatively
+    deterministic: [...new Set([
+      ...cases.map(u => u.deterministic),
+      "Calculations, totals and eligibility run as code — never generated.",
+      "Exact record lookups query the system of record directly.",
+    ])],
     retrieval: cases.some(u => /rag|retriev|knowledge|citation/i.test(u.pattern)) ? "Vector retrieval over governed enterprise data with citation of sources." : "Not required for the current use cases.",
     evaluation: "Offline eval set with accuracy/groundedness metrics; block launch until thresholds met; ongoing sampling in production.",
+    monitoring: "Track accuracy/groundedness, latency, cost, deflection and escalation rate; sampled human review feeds a feedback loop and periodic eval-set updates.",
+    privacy: hasCompliance
+      ? "PII minimised in prompts and logs; data kept in-region; retention limits on prompt/response storage per stated compliance requirements."
+      : "PII minimised in prompts and logs; retention limits applied; confirm compliance scope in discovery.",
     responsible: [
       "Human review required on customer-facing output.",
       "Deterministic facts (order status, account data, eligibility) fetched from systems of record — never generated.",
       "PII handling and prompt/response logging with retention limits.",
       "Confidence scoring with safe escalation to humans on low confidence or sensitive topics.",
     ],
-    reqs: [...new Set(cases.flatMap(u => u.reqs))],
+    reqs: aiReqIds,
   };
 }
 

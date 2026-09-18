@@ -49,9 +49,31 @@ function StrategyStage({ ctx }) {
         {ai.cases.map(u => <Card key={u.id} pad={13}><div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 5 }}><IdChip id={u.id} /><span style={{ fontWeight: 600, fontSize: 14 }}>{u.title}</span><Chip>{u.pattern}</Chip></div>
           <div style={{ fontSize: 12.3, color: "var(--ink-soft)", display: "grid", gap: 3 }}><div><b style={{ color: "var(--stated)" }}>Human review:</b> {u.human}</div><div><b style={{ color: "var(--ink)" }}>Deterministic boundary:</b> {u.deterministic}</div><div>Supports {u.reqs.map(id => <IdChip key={id} id={id} />)}</div></div></Card>)}
         <Card style={{ borderColor: "var(--accent-soft)", background: "var(--accent-soft)" }}><div style={{ fontSize: 13, fontWeight: 700, marginBottom: 4, color: "var(--accent-ink)" }}>Recommended framework — {ai.framework.name}</div><div style={{ fontSize: 12.5, color: "var(--ink-soft)" }}>{ai.framework.why}</div></Card>
+
+        {ai.aiRequirements.length > 0 && <Card pad={13}><div style={{ fontSize: 12.5, fontWeight: 700, marginBottom: 5 }}>AI-specific requirements</div>
+          <div style={{ display: "grid", gap: 3 }}>{ai.aiRequirements.map(r => <div key={r.id} style={{ fontSize: 12.3, color: "var(--ink-soft)" }}><IdChip id={r.id} /> {r.text}</div>)}</div></Card>}
+
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+          <Card pad={13}><div style={{ fontSize: 12.5, fontWeight: 700, marginBottom: 5 }}>Model / provider options</div>
+            <div style={{ fontSize: 12.3, color: "var(--ink-soft)", marginBottom: 3 }}><b>Managed:</b> {ai.models.managed}</div>
+            <div style={{ fontSize: 12.3, color: "var(--ink-soft)", marginBottom: 3 }}><b>Open-weight:</b> {ai.models.open}</div>
+            <div style={{ fontSize: 11.8, color: "var(--ink-faint)" }}>{ai.models.why}</div></Card>
+          <Card pad={13}><div style={{ fontSize: 12.5, fontWeight: 700, marginBottom: 5 }}>Orchestration</div>
+            <div style={{ fontSize: 12.3, color: "var(--ink-soft)", marginBottom: 6 }}>{ai.orchestration}</div>
+            <div style={{ fontSize: 12.5, fontWeight: 700, margin: "4px 0 4px" }}>Prompt &amp; structured output</div>
+            <div style={{ fontSize: 12.3, color: "var(--ink-soft)" }}>{ai.prompt}</div></Card>
+        </div>
+
+        <Card pad={13}><div style={{ fontSize: 12.5, fontWeight: 700, marginBottom: 5 }}>Where deterministic processing is used instead of AI</div>
+          <ul style={{ margin: 0, paddingLeft: 16, fontSize: 12.3, color: "var(--ink-soft)" }}>{ai.deterministic.map((x, i) => <li key={i} style={{ marginBottom: 3 }}>{x}</li>)}</ul></Card>
+
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
           <Card pad={13}><div style={{ fontSize: 12.5, fontWeight: 700, marginBottom: 5 }}>Retrieval &amp; evaluation</div><div style={{ fontSize: 12.3, color: "var(--ink-soft)", marginBottom: 6 }}>{ai.retrieval}</div><div style={{ fontSize: 12.3, color: "var(--ink-soft)" }}>{ai.evaluation}</div></Card>
+          <Card pad={13}><div style={{ fontSize: 12.5, fontWeight: 700, marginBottom: 5 }}>Monitoring &amp; feedback</div><div style={{ fontSize: 12.3, color: "var(--ink-soft)" }}>{ai.monitoring}</div></Card>
+        </div>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
           <Card pad={13}><div style={{ fontSize: 12.5, fontWeight: 700, marginBottom: 5 }}>Responsible AI</div><ul style={{ margin: 0, paddingLeft: 16, fontSize: 12.3, color: "var(--ink-soft)" }}>{ai.responsible.map((x, i) => <li key={i} style={{ marginBottom: 3 }}>{x}</li>)}</ul></Card>
+          <Card pad={13}><div style={{ fontSize: 12.5, fontWeight: 700, marginBottom: 5 }}>Data privacy</div><div style={{ fontSize: 12.3, color: "var(--ink-soft)" }}>{ai.privacy}</div></Card>
         </div>
       </> : <Empty title="No AI use cases in scope">This solution is currently deterministic. Add an AI-oriented requirement to generate an AI approach.</Empty>}
     </div>}

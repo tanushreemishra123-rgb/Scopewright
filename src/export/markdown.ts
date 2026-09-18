@@ -58,8 +58,17 @@ export function buildMarkdown(pkg: ScopingPackage): string {
   p(`\n## Integration architecture`);
   integ.items.forEach(x => p(`- **${x.id}** ${x.name} — ${x.mode} (${x.systems}).`));
   p(`\n## AI solution approach`);
+  if (ai.aiRequirements.length) p(`- **AI-specific requirements:** ${ai.aiRequirements.map((r: any) => r.id).join(", ")}.`);
   ai.cases.forEach(u => p(`- **${u.title}** (${u.reqs.join(", ")}) — ${u.pattern}. Human: ${u.human}. Deterministic: ${u.deterministic}`));
   p(`- **Recommended framework:** ${ai.framework.name} — ${ai.framework.why}`);
+  p(`- **Model / provider options:** Managed — ${ai.models.managed} Open-weight — ${ai.models.open} (${ai.models.why})`);
+  p(`- **Orchestration:** ${ai.orchestration}`);
+  p(`- **Prompt & structured-output management:** ${ai.prompt}`);
+  p(`- **Retrieval:** ${ai.retrieval}`);
+  p(`- **Where deterministic instead of AI:** ${ai.deterministic.join(" ")}`);
+  p(`- **Evaluation:** ${ai.evaluation}`);
+  p(`- **Monitoring & feedback:** ${ai.monitoring}`);
+  p(`- **Data privacy:** ${ai.privacy}`);
   p(`- **Responsible AI:** ${ai.responsible.join(" ")}`);
 
   p(`\n## Effort, timeline & ROM`);

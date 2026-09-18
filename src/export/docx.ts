@@ -56,8 +56,16 @@ export async function buildDocxBlob(pkg: ScopingPackage): Promise<Blob> {
   kids.push(H("Integration architecture"));
   integ.items.forEach(x => kids.push(B(`${x.id} ${x.name} — ${x.mode} (${x.systems})`)));
   kids.push(H("AI solution approach"));
+  if (ai.aiRequirements.length) kids.push(B(`AI-specific requirements: ${ai.aiRequirements.map((r: any) => r.id).join(", ")}`));
   ai.cases.forEach(u => kids.push(B(`${u.title} (${u.reqs.join(", ")}) — ${u.pattern}`)));
   kids.push(B(`Recommended framework: ${ai.framework.name} — ${ai.framework.why}`));
+  kids.push(B(`Model / provider options: managed — ${ai.models.managed}; open-weight — ${ai.models.open}`));
+  kids.push(B(`Orchestration: ${ai.orchestration}`));
+  kids.push(B(`Prompt & structured-output management: ${ai.prompt}`));
+  kids.push(B(`Where deterministic instead of AI: ${ai.deterministic.join(" ")}`));
+  kids.push(B(`Evaluation: ${ai.evaluation}`));
+  kids.push(B(`Monitoring & feedback: ${ai.monitoring}`));
+  kids.push(B(`Data privacy: ${ai.privacy}`));
 
   kids.push(H("Effort, timeline & ROM"));
   est.rows.forEach(r => kids.push(B(`${r.label} — ${r.complexity} — ${r.weeks} pw (${r.driver})`)));
