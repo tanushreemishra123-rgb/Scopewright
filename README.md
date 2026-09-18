@@ -4,6 +4,14 @@ Turns unstructured customer requirements (RFPs, discovery notes, emails) into a 
 
 > This is an internal planning aid, not a final quotation, contractual commitment, architecture approval, or delivery guarantee.
 
+## Demo video
+
+▶️ **Demo:** _<add your video link here>_ &nbsp;(recommended 3–5 min; walkthrough steps in the demo notes)
+
+## Architecture
+
+See **[`docs/ARCHITECTURE.html`](docs/ARCHITECTURE.html)** for a self-contained, rendered architecture diagram (component layers + data-flow) and a node-to-code map. Open it in any browser.
+
 ## Why it's not a prompt-to-document tool
 
 Everything downstream is a **pure function of one shared scope model** (`Session`). Edit or exclude a requirement and the PRD, coverage, architecture and estimate all recompute. Requirement IDs (`BR/FR/NFR/INT/DATA/SEC`) carry source text and a classification, and flow through every deliverable, so coverage and consistency are *computed*, not eyeballed.
@@ -80,20 +88,22 @@ No backend and no telemetry. Requirements live only in the browser tab and are p
 ```
 src/
   core/        pure engine (single source of truth)
-    types.ts cloudMap.ts scenarios.ts analyze.ts schema.ts
+    types.ts cloudMap.ts scenarios.ts analyze.ts ingest.ts schema.ts
     generators.ts estimate.ts changeImpact.ts quality.ts packageModel.ts
   providers/   mock + optional live AI behind one interface
   export/      markdown.ts docx.ts print/pdf
-  App.jsx      UI (stage rail: Requirements → PRD → Architecture → Strategy → Estimate → Package)
-tests/         vitest: schema, estimate, model/coverage/change-impact/quality/export
+  App.jsx      app shell: global state, stage routing, sidebar + header
+  ui/          per-stage screens + shared primitives
+               (Landing, Requirements, PRD, Architecture, Strategy, Estimate, Package)
+tests/         vitest: schema, estimate, model/coverage/change-impact/quality, ingest
 seed/          sample requirements, context, estimation + rate + commercial config,
                mock responses, JSON schemas, expected package structure
-docs/          ARCHITECTURE.html
+docs/          ARCHITECTURE.html (self-contained diagram)
 ```
 
 ## Seed scenarios
 
-`Orion Retail` (modernization + AI + integrations, with missing info), `Meridian Insurance` (data/integration-heavy), `Helio Telecom` (AI-enabled), `Nimbus Health` (sparse brief — important missing information). Plus paste-your-own with heuristic extraction.
+`Orion Retail` (modernization + AI + integrations, with missing info), `Meridian Insurance` (data/integration-heavy), `Helio Telecom` (AI-enabled), `Nimbus Health` (sparse brief — important missing information). Plus paste-your-own, or upload a requirements document (.txt, .md, .pdf, .docx) — text is extracted browser-side (`src/core/ingest.ts`) and fed to the same heuristic analyzer.
 
 ## Tests
 

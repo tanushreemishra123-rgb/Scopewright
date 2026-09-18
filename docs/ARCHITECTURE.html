@@ -100,7 +100,7 @@
 
   <div class="diagram">
     <div class="layer">
-      <div class="gutter">Browser<br><small>src/App.jsx</small></div>
+      <div class="gutter">Browser<br><small>src/App.jsx + src/ui/*</small></div>
       <div class="row"><div class="box accent full"><b>Browser application — React UI</b><span>6-stage workflow rail · in-browser only</span></div></div>
     </div>
     <div class="chev">▼</div>
@@ -109,7 +109,7 @@
       <div class="gutter">Ingestion</div>
       <div class="row">
         <div class="box tint-ingest"><b>Paste requirements</b><span>RFP · notes · email</span></div>
-        <div class="box tint-ingest"><b>Upload .txt / .md</b><span>FileReader</span></div>
+        <div class="box tint-ingest"><b>Upload .txt · .md · .pdf · .docx</b><span>core/ingest.ts</span></div>
         <div class="box tint-ingest"><b>Seed scenarios</b><span>core/scenarios.ts</span></div>
       </div>
     </div>
@@ -239,8 +239,8 @@
   <table>
     <thead><tr><th>Diagram node</th><th>Module</th><th>Responsibility</th></tr></thead>
     <tbody>
-      <tr><td>Browser application</td><td>src/App.jsx</td><td>6-stage UI; two-way with the scope model</td></tr>
-      <tr><td>Requirements ingestion</td><td>App.jsx · core/analyze.ts</td><td>Paste / upload / seed; heuristic extraction of pasted text</td></tr>
+      <tr><td>Browser application</td><td>src/App.jsx + src/ui/*</td><td>Shell + six per-stage screens; two-way with the scope model</td></tr>
+      <tr><td>Requirements ingestion</td><td>core/ingest.ts · core/analyze.ts</td><td>Paste / upload (txt·md·pdf·docx) / seed; text extraction + heuristic analysis</td></tr>
       <tr><td>AI orchestration + Mock provider</td><td>src/providers</td><td>Provider interface; deterministic mock; optional live</td></tr>
       <tr><td>Structured-output validation</td><td>core/schema.ts</td><td>Validate analysis before it enters the model</td></tr>
       <tr><td>Structured scope model</td><td>core/types.ts</td><td>Session — the single source of truth</td></tr>

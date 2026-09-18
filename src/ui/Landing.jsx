@@ -1,7 +1,7 @@
 // Session entry (Requirement 1 — ingestion): pick a seed scenario or paste requirements,
 // then call the provider to produce the initial, schema-validated scope model.
 import React, { useState } from "react";
-import { SCENARIOS } from "../core";
+import { SCENARIOS, ACCEPTED_UPLOAD, extractText } from "../core";
 import { provider } from "./provider";
 import { Logo, Chip, Btn, Card } from "./primitives";
 
@@ -33,7 +33,7 @@ function Landing({ onStart }) {
           <input value={name} onChange={e => setName(e.target.value)} placeholder="Customer / opportunity name" style={{ width: "100%", padding: "9px 11px", border: "1px solid var(--line-strong)", borderRadius: 8, marginBottom: 10, background: "var(--surface-2)" }} />
           <textarea value={text} onChange={e => setText(e.target.value)} rows={9} placeholder="Paste RFP content, discovery notes, emails or requirements here…" style={{ width: "100%", padding: 11, border: "1px solid var(--line-strong)", borderRadius: 8, resize: "vertical", background: "var(--surface-2)", fontSize: 13.5, lineHeight: 1.55 }} />
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 12 }}>
-            <label style={{ fontSize: 12.5, color: "var(--ink-soft)", cursor: "pointer" }}><input type="file" accept=".txt,.md" style={{ display: "none" }} onChange={e => { const f = e.target.files[0]; if (f) { const r = new FileReader(); r.onload = () => setText(String(r.result)); r.readAsText(f); } }} />↑ Upload .txt / .md</label>
+            <label style={{ fontSize: 12.5, color: "var(--ink-soft)", cursor: "pointer" }}><input type="file" accept={ACCEPTED_UPLOAD} style={{ display: "none" }} onChange={async e => { const f = e.target.files[0]; if (!f) return; setBusy(true); try { setText(await extractText(f)); } catch (err) { alert("Couldn't read that file automatically — please paste the text instead."); } finally { setBusy(false); } }} />↑ Upload .txt / .md / .pdf / .docx</label>
             <Btn onClick={startCustom} disabled={busy || text.trim().length < 30}>{busy ? "Analyzing…" : "Analyze requirements →"}</Btn>
           </div>
         </Card>}

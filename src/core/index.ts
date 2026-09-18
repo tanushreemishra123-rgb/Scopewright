@@ -8,3 +8,4 @@ export * from "./estimate";
 export * from "./changeImpact";
 export * from "./quality";
 export * from "./packageModel";
+export * from "./ingest";
