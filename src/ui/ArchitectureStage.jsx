@@ -25,9 +25,11 @@ function ArchStage({ ctx }) {
           {arch.components.map(c => <Card key={c.key} pad={13}>
             <span style={{ fontWeight: 600, fontSize: 14 }}>{c.name}</span>
             <div style={{ fontSize: 12.5, fontWeight: 600, color: "var(--accent-ink)", fontFamily: "JetBrains Mono", margin: "3px 0 7px" }}>{c.service}</div>
+            <div style={{ fontSize: 11.5, color: "var(--ink-faint)", marginBottom: 3 }}><b>Purpose:</b> {c.purpose}</div>
             <p style={{ fontSize: 12.3, color: "var(--ink-soft)", margin: "0 0 7px" }}>{c.rationale}</p>
             <div style={{ fontSize: 11.5, color: "var(--ink-faint)", marginBottom: 3 }}><b>Trade-off:</b> {c.tradeoff}</div>
-            <div style={{ fontSize: 11.5, color: "var(--ink-faint)", marginBottom: 7 }}><b>Security:</b> {c.sec}</div>
+            <div style={{ fontSize: 11.5, color: "var(--ink-faint)", marginBottom: 3 }}><b>Security:</b> {c.sec}</div>
+            {c.deps.length > 0 && <div style={{ fontSize: 11.5, color: "var(--ink-faint)", marginBottom: 7 }}><b>Dependencies:</b> {c.deps.join(", ")}</div>}
             <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>{c.reqIds.length ? c.reqIds.map(id => <IdChip key={id} id={id} />) : <Chip>cross-cutting</Chip>}</div></Card>)}
         </div>
         <div style={{ textAlign: "right" }}><Btn onClick={() => setStage("strategy")}>Plan data, integration &amp; AI →</Btn></div>
@@ -35,7 +37,7 @@ function ArchStage({ ctx }) {
   </div>;
 }
 function ArchDiagram({ arch }) {
-  const tiers = [{ t: "Experience", keys: ["web", "identity"] }, { t: "Application", keys: ["api", "compute", "cache", "events"] }, { t: "Data & AI", keys: ["rdb", "nosql", "storage", "vector", "ai"] }, { t: "Integration", keys: ["integ"] }, { t: "Platform", keys: ["obs", "security", "cicd"] }];
+  const tiers = [{ t: "Experience", keys: ["web", "identity"] }, { t: "Application", keys: ["api", "compute", "cache", "events"] }, { t: "Data & AI", keys: ["rdb", "nosql", "storage", "vector", "ai"] }, { t: "Integration", keys: ["integ"] }, { t: "Platform", keys: ["obs", "security", "backup", "cicd"] }];
   const present = (k) => arch.components.find(c => c.key === k);
   return <Card pad={16}>
     <div style={{ fontSize: 12, fontWeight: 700, color: "var(--ink-soft)", marginBottom: 12 }}>Architecture overview — {CLOUDS[arch.cloud]}</div>

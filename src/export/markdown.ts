@@ -50,7 +50,7 @@ export function buildMarkdown(pkg: ScopingPackage): string {
       if (names.length) p(`${t.padEnd(13)}| ${names.join("  ·  ")}`);
     });
     p("```");
-    arch.components.forEach(c => p(`- **${c.name}** → ${c.service} — supports ${c.reqIds.join(", ") || "cross-cutting"}. ${c.rationale}`));
+    arch.components.forEach(c => p(`- **${c.name}** → ${c.service} — supports ${c.reqIds.join(", ") || "cross-cutting"}. ${c.rationale}${c.deps.length ? ` _Depends on:_ ${c.deps.join(", ")}.` : ""}`));
   } else p(`\n## Solution architecture\n_No cloud platform selected._`);
 
   p(`\n## Data strategy`);

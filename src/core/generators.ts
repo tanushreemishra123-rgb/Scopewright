@@ -31,7 +31,7 @@ export function buildArchitecture(s: Session, cloud: Cloud): Architecture {
   const reqsOf = (pred: (r: Requirement) => boolean) => rs.filter(pred).map(r => r.id);
   const comps: ArchComponent[] = [];
   const add = (key: string, name: string, purpose: string, rationale: string, reqIds: string[], tradeoff: string, sec: string) =>
-    comps.push({ key, name, service: SERVICE_MAP[key][cloud], purpose, rationale, reqIds, tradeoff, sec });
+    comps.push({ key, name, service: SERVICE_MAP[key][cloud], purpose, rationale, reqIds, tradeoff, sec, deps: [] });
 
   add("web", "User-facing web app", "Front-end for associates/agents/analysts.",
     "Requirements call for browser-based apps; managed static hosting removes ops overhead.",
@@ -42,6 +42,9 @@ export function buildArchitecture(s: Session, cloud: Cloud): Architecture {
   if (has("Data")) add("rdb", "Transactional database", "Primary system-of-record store.",
     "Managed PostgreSQL provides ACID, encryption, automated backups and regional residency.",
     reqsOf(r => r.type === "Data"), "Vertical scaling limits; may need read replicas at peak.", "Encryption at rest via KMS; residency pinned to region.");
+  if (has("Data") || (s.aiUseCases && s.aiUseCases.length)) add("storage", "Object storage", "Store documents, exports, model artefacts and large blobs.",
+    "Requirements involve files/large objects and analytical/backup data better held outside the transactional store.",
+    reqsOf(r => r.type === "Data"), "Eventual consistency; lifecycle policies to manage.", "Encryption at rest + bucket-level access policies.");
   const peak = rs.some(r => /peak|500,000|scale|concurren/i.test(r.description));
   if (peak) {
     add("cache", "Caching / read acceleration", "Absorb read spikes and cut DB load at peak.",
@@ -71,8 +74,21 @@ export function buildArchitecture(s: Session, cloud: Cloud): Architecture {
   add("security", "Security controls", "Key management, WAF and secrets.",
     "Compliance/audit requirements mandate managed crypto and edge protection.",
     reqsOf(r => r.type === "Security"), "Policy overhead.", "Central to compliance posture.");
+  if (has("Data")) add("backup", "Backup & disaster recovery", "Automated backups, retention and cross-region recovery.",
+    "Availability/retention requirements need point-in-time recovery and a DR target.",
+    reqsOf(r => r.type === "Data" || r.type === "Non-functional"), "Cross-region cost; RPO/RTO to agree.", "Immutable, encrypted backups; tested restores.");
   add("cicd", "CI/CD & environments", "Build, test and promote across dev/test/prod.",
     "Repeatable delivery across environments needs automated pipelines.", [], "Pipeline maintenance.", "Signed artifacts; environment isolation.");
+
+  // Post-process: component-to-component dependencies (shown as component names, only when present).
+  const DEP_MAP: Record<string, string[]> = {
+    web: ["api", "identity"], api: ["rdb", "identity", "events", "integ"], rdb: ["security"],
+    storage: ["security"], cache: ["rdb"], events: ["security"], integ: ["events", "security"],
+    ai: ["vector", "integ", "security"], vector: ["storage"], backup: ["rdb", "storage"],
+    obs: [], security: [], identity: [], cicd: [],
+  };
+  const nameOf: Record<string, string> = Object.fromEntries(comps.map(c => [c.key, c.name]));
+  comps.forEach(c => { c.deps = (DEP_MAP[c.key] || []).filter(k => nameOf[k] && k !== c.key).map(k => nameOf[k]); });
   return { cloud, components: comps };
 }
 

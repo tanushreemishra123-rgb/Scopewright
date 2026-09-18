@@ -16,6 +16,7 @@ export const SERVICE_MAP: Record<string, Record<Cloud, string>> = {
   cache:    { aws: "Amazon ElastiCache (Redis)", azure: "Azure Cache for Redis", gcp: "Memorystore for Redis" },
   nosql:    { aws: "Amazon DynamoDB", azure: "Azure Cosmos DB", gcp: "Firestore" },
   storage:  { aws: "Amazon S3", azure: "Azure Blob Storage", gcp: "Cloud Storage" },
+  backup:   { aws: "AWS Backup + cross-region S3 replication", azure: "Azure Backup + geo-redundant storage (GRS)", gcp: "Backup and DR Service + multi-region Cloud Storage" },
   events:   { aws: "Amazon EventBridge + SQS/SNS", azure: "Azure Event Grid + Service Bus", gcp: "Pub/Sub + Eventarc" },
   identity: { aws: "Amazon Cognito", azure: "Microsoft Entra ID (External ID)", gcp: "Identity Platform" },
   integ:    { aws: "AWS Step Functions + AppFlow", azure: "Azure Logic Apps + Integration Services", gcp: "Cloud Workflows + Apigee" },

@@ -49,7 +49,7 @@ export async function buildDocxBlob(pkg: ScopingPackage): Promise<Blob> {
       if (names.length) kids.push(new Paragraph({ children: [new TextRun({ text: `${t}: `, bold: true }), new TextRun(names.join("  ·  "))] }));
     });
   }
-  (arch?.components || []).forEach(c => kids.push(B(`${c.name} → ${c.service} — supports ${c.reqIds.join(", ") || "cross-cutting"}. ${c.rationale}`)));
+  (arch?.components || []).forEach(c => kids.push(B(`${c.name} → ${c.service} — supports ${c.reqIds.join(", ") || "cross-cutting"}. ${c.rationale}${c.deps.length ? ` Depends on: ${c.deps.join(", ")}.` : ""}`)));
 
   kids.push(H("Data strategy"));
   data.points.forEach(x => kids.push(B(`${x.k}: ${x.v}`)));
