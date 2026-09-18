@@ -14,11 +14,33 @@ function PackageStage({ ctx }) {
 
   return <div>
     <SectionTitle sub="Change a key input to see exactly which outputs are affected — reviewed, unaffected content is preserved. Then run the quality gate before export.">Validate &amp; prepare the scoping package</SectionTitle>
+
+    <Card pad={0} style={{ marginBottom: 16, overflow: "hidden" }}>
+      <div style={{ display: "flex", flexWrap: "wrap" }}>
+        {[
+          ["Requirement coverage", `${gate.summary.coveragePct}%`, gate.summary.coveragePct >= 90 ? "var(--ok)" : "var(--warn)"],
+          ["Uncovered requirements", gate.summary.uncovered, gate.summary.uncovered === 0 ? "var(--ok)" : "var(--warn)"],
+          ["Unresolved questions", gate.summary.unresolved, gate.summary.unresolved === 0 ? "var(--ok)" : "var(--warn)"],
+          ["Unsupported recommendations", gate.summary.unsupported, gate.summary.unsupported === 0 ? "var(--ok)" : "var(--bad)"],
+          ["Estimate confidence", gate.summary.confidence, gate.summary.confidence === "High" ? "var(--ok)" : gate.summary.confidence === "Low" ? "var(--bad)" : "var(--warn)"],
+          ["Export status", gate.summary.status, gate.summary.status === "Ready to export" ? "var(--ok)" : gate.summary.status === "Blocked" ? "var(--bad)" : "var(--warn)"],
+        ].map(([label, val, color], i) => <div key={i} style={{ flex: "1 1 150px", padding: "12px 14px", borderRight: "1px solid var(--line)", borderBottom: "1px solid var(--line)" }}>
+          <div style={{ fontSize: 10.5, color: "var(--ink-faint)", textTransform: "uppercase", letterSpacing: ".03em", marginBottom: 4 }}>{label}</div>
+          <div style={{ fontSize: 17, fontWeight: 700, fontFamily: "JetBrains Mono", color }}>{val}</div>
+        </div>)}
+      </div>
+    </Card>
+
     <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, alignItems: "start" }}>
       <Card><div style={{ fontSize: 13, fontWeight: 700, marginBottom: 10 }}>Review change impact</div>
         <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 12 }}>
           <Btn small kind="soft" onClick={() => applyChange("users")}>User volume ×10</Btn>
           <Btn small kind="soft" onClick={() => applyChange("cloud")}>Switch cloud</Btn>
+          <Btn small kind="soft" onClick={() => applyChange("priority")}>Raise a requirement priority</Btn>
+          <Btn small kind="soft" onClick={() => applyChange("security")}>Tighten a security requirement</Btn>
+          <Btn small kind="soft" onClick={() => applyChange("integration")}>Increase integration complexity</Btn>
+          <Btn small kind="soft" onClick={() => applyChange("deadline")}>Tighten delivery deadline</Btn>
+          <Btn small kind="soft" onClick={() => applyChange("rate")}>Rate card +15%</Btn>
           <Btn small kind="soft" onClick={() => applyChange("contingency")}>Contingency → 30%</Btn>
           <Btn small kind="soft" onClick={() => applyChange("scope")}>Drop a low-priority req</Btn>
         </div>

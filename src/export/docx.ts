@@ -77,6 +77,7 @@ export async function buildDocxBlob(pkg: ScopingPackage): Promise<Blob> {
   if (risks.length) { kids.push(H("Risks")); risks.forEach((r: any) => kids.push(B(`${r.id} [${r.severity}/${r.category}] ${r.description} — mitigation: ${r.mitigation}`))); }
 
   kids.push(H("Requirement coverage & quality gate"));
+  kids.push(P(`Requirement Coverage: ${gate.summary.coveragePct}% | Uncovered: ${gate.summary.uncovered} | Unresolved Questions: ${gate.summary.unresolved} | Unsupported Recommendations: ${gate.summary.unsupported} | Estimate Confidence: ${gate.summary.confidence} | Export Status: ${gate.summary.status}`));
   kids.push(P(`Coverage ${cov.pct}% (${cov.covered}/${cov.total}). Uncovered: ${cov.uncovered.map(r => r.id).join(", ") || "none"}.`));
   gate.checks.forEach(c => kids.push(B(`${c.ok ? "PASS" : "REVIEW"} — ${c.label}: ${c.detail}`)));
 

@@ -16,6 +16,18 @@ See **[`docs/ARCHITECTURE.html`](docs/ARCHITECTURE.html)** for a self-contained,
 
 Everything downstream is a **pure function of one shared scope model** (`Session`). Edit or exclude a requirement and the PRD, coverage, architecture and estimate all recompute. Requirement IDs (`BR/FR/NFR/INT/DATA/SEC`) carry source text and a classification, and flow through every deliverable, so coverage and consistency are *computed*, not eyeballed.
 
+## Architecture & code organization
+
+Concerns are separated by responsibility, not crammed into one component:
+
+- **`src/App.jsx` — the shell only (~87 lines).** Global state (scope model, cloud, estimate config), localStorage persistence, stage routing, and the sidebar/header. It contains no deliverable logic.
+- **`src/ui/*` — one module per stage.** `Landing`, `RequirementsStage`, `PRDStage`, `ArchitectureStage`, `StrategyStage`, `EstimateStage`, `PackageStage`, each opening with a doc comment stating its single responsibility and the requirement it serves.
+- **`src/ui/primitives.jsx` — shared UI + design tokens.** One source of the chip/button/card styling and the requirement-classification palette, so styling isn't duplicated across stages (DRY).
+- **`src/core/*` — the pure, framework-agnostic engine and single source of truth.** All generation (`generators.ts`), estimation (`estimate.ts`), coverage/traceability, change-impact (`changeImpact.ts`), quality gate (`quality.ts`), schema validation (`schema.ts`) and package assembly (`packageModel.ts`) are pure functions with **no React and no I/O** — which is exactly why they are unit-tested directly (46 tests). The UI renders their output; it never re-implements logic.
+- **`src/providers/*`** (mock + optional live AI behind one interface) and **`src/export/*`** (Markdown/DOCX/PDF serializers) are likewise isolated.
+
+The result: the same scope model drives the UI, the exports and the tests, with no duplicated business logic between them.
+
 ## Run locally
 
 ```bash

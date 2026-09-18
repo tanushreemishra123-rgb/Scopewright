@@ -90,7 +90,10 @@ export function buildMarkdown(pkg: ScopingPackage): string {
   p(`\n## Open questions`); (s.openQuestions || []).forEach(q => p(`- ${q.id}: ${q.text}${q.resolved ? ` — resolved: ${q.answer}` : " — unresolved"}`));
 
   p(`\n## Requirement coverage & quality gate`);
-  p(`Coverage ${cov.pct}% (${cov.covered}/${cov.total}). Uncovered: ${cov.uncovered.map(r => r.id).join(", ") || "none"}. Dangling refs: ${cov.dangling.join(", ") || "none"}.`);
+  p(`| Requirement Coverage | Uncovered | Unresolved Questions | Unsupported Recommendations | Estimate Confidence | Export Status |`);
+  p(`|---|---|---|---|---|---|`);
+  p(`| ${gate.summary.coveragePct}% | ${gate.summary.uncovered} | ${gate.summary.unresolved} | ${gate.summary.unsupported} | ${gate.summary.confidence} | ${gate.summary.status} |`);
+  p(`\nCoverage ${cov.pct}% (${cov.covered}/${cov.total}). Uncovered: ${cov.uncovered.map(r => r.id).join(", ") || "none"}. Dangling refs: ${cov.dangling.join(", ") || "none"}.`);
   gate.checks.forEach(c => p(`- [${c.ok ? "x" : " "}] ${c.label} — ${c.detail}`));
   p(`\n_Export status: ${gate.status}._`);
   return L.join("\n");

@@ -3,7 +3,8 @@ import type { Estimate } from "./estimate";
 import { CLOUDS } from "./cloudMap";
 
 export interface QualityCheck { label: string; ok: boolean; detail: string; }
-export interface QualityGate { checks: QualityCheck[]; passed: number; total: number; status: string; unsupported: number; confidence: string; }
+export interface QualitySummary { coveragePct: number; uncovered: number; unresolved: number; unsupported: number; confidence: string; status: string; }
+export interface QualityGate { checks: QualityCheck[]; passed: number; total: number; status: string; unsupported: number; confidence: string; summary: QualitySummary; }
 
 /** Pre-export quality gate: coverage, consistency, unsupported recommendations, estimation gaps. */
 export function runQualityGate(
@@ -57,5 +58,13 @@ export function runQualityGate(
 
   const passed = checks.filter(c => c.ok).length;
   const status = checks.every(c => c.ok) ? "Ready to export" : (hiUncovered.length || cov.dangling.length) ? "Blocked" : "Review required";
-  return { checks, passed, total: checks.length, status, unsupported: cov.dangling.length, confidence: est ? est.confidence : "—" };
+  const summary: QualitySummary = {
+    coveragePct: cov.pct,
+    uncovered: cov.uncovered.length,
+    unresolved: (s.openQuestions || []).filter(q => !q.resolved).length,
+    unsupported: cov.dangling.length,
+    confidence: est ? est.confidence : "—",
+    status,
+  };
+  return { checks, passed, total: checks.length, status, unsupported: cov.dangling.length, confidence: est ? est.confidence : "—", summary };
 }
