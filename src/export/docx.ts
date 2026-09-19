@@ -1,12 +1,12 @@
 import { Document, Packer, Paragraph, HeadingLevel, TextRun } from "docx";
 import type { ScopingPackage } from "../core/packageModel";
 import { CLOUDS } from "../core/cloudMap";
-import { PHASES } from "../core/estimate";
+import { PHASES, formatMoney } from "../core/estimate";
 
 /** Build a Word (.docx) scoping package and return a Blob (browser). */
 export async function buildDocxBlob(pkg: ScopingPackage): Promise<Blob> {
   const { session: s, caps, arch, ai, data, integ, cov, est, gate, included, prdExtras, risks, personas, journeys } = pkg;
-  const money = (n: number) => `${est.cfg.currency} ${n.toLocaleString()}`;
+  const money = (n: number) => formatMoney(n, est.cfg.currency);
   const P = (t: string) => new Paragraph({ children: [new TextRun(t)] });
   const H = (t: string, level: any = HeadingLevel.HEADING_1) => new Paragraph({ text: t, heading: level });
   const B = (t: string) => new Paragraph({ text: t, bullet: { level: 0 } });

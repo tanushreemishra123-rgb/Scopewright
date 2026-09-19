@@ -1,11 +1,11 @@
 import type { ScopingPackage } from "../core/packageModel";
 import { CLOUDS } from "../core/cloudMap";
-import { PHASES } from "../core/estimate";
+import { PHASES, formatMoney } from "../core/estimate";
 
 export function buildMarkdown(pkg: ScopingPackage): string {
   const { session: s, caps, arch, ai, data, integ, cov, est, gate, included, prdExtras, risks, personas, journeys } = pkg;
   const L: string[] = []; const p = (x: string) => L.push(x);
-  const money = (n: number) => `${est.cfg.currency} ${n.toLocaleString()}`;
+  const money = (n: number) => formatMoney(n, est.cfg.currency);
 
   p(`# Solution Scoping Package — ${s.name}`);
   p(`\n> ${pkg.disclaimer}\n`);

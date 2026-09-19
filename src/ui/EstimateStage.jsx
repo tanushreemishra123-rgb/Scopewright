@@ -1,7 +1,7 @@
 // Stage 5 — Estimate the delivery. Reproducible effort/ROM from visible scope factors,
 // role/skill breakdown, phase milestones, delivery risks and confidence flags. Requirement 5.
 import React from "react";
-import { PHASES } from "../core";
+import { PHASES, formatMoney } from "../core";
 import { PRIO, Chip, Btn, Card, SectionTitle, Empty } from "./primitives";
 
 const inp = { width: "100%", padding: "7px 9px", border: "1px solid var(--line-strong)", borderRadius: 7, background: "var(--surface-2)", fontSize: 13 };
@@ -9,7 +9,7 @@ const Field = ({ label, children }) => <div style={{ marginBottom: 11 }}><div st
 function EstimateStage({ ctx }) {
   const { pkg, estCfg, setEstCfg, setStage } = ctx;
   if (!pkg) return <Empty title="Approve the scope first">Return to Requirements and approve the reviewed scope model.</Empty>;
-  const est = pkg.est; const money = (n) => `${estCfg.currency} ${n.toLocaleString()}`; const set = (k, v) => setEstCfg({ ...estCfg, [k]: v });
+  const est = pkg.est; const money = (n) => formatMoney(n, estCfg.currency); const set = (k, v) => setEstCfg({ ...estCfg, [k]: v });
   return <div>
     <SectionTitle sub="Effort, timeline and ROM are computed from visible scope factors and configurable rates — not generated as free-text numbers. Change any factor and everything recalculates.">Estimate the delivery</SectionTitle>
     <div style={{ display: "grid", gridTemplateColumns: "1.5fr 1fr", gap: 16, alignItems: "start" }}>

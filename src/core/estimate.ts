@@ -36,6 +36,14 @@ export const DEFAULT_EST: EstimateConfig = {
   productivity: 1.0, cloudComplexity: "Medium",
 };
 const CLOUD_COMPLEXITY_PCT: Record<string, number> = { Low: 0, Medium: 0.05, High: 0.10 };
+
+// Currency-aware grouping: pick the locale for the selected currency rather than the
+// machine's default (which would render every currency with the same grouping).
+const CURRENCY_LOCALE: Record<string, string> = { INR: "en-IN", USD: "en-US", GBP: "en-GB", EUR: "en-IE" };
+export function formatMoney(n: number, currency: string): string {
+  const locale = CURRENCY_LOCALE[currency] || "en-US";
+  return `${currency} ${Math.round(n).toLocaleString(locale)}`;
+}
 export const EFFORT = {
   capability: { Low: 3, Medium: 6, High: 10 } as Record<string, number>,
   integration: { Low: 2, Medium: 4, High: 6 } as Record<string, number>,
