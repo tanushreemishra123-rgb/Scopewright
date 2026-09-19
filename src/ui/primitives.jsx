@@ -3,12 +3,17 @@
 // source of chip/button/card styling and the requirement-classification palette.
 import React from "react";
 
-const CLS = {
+// Defensive lookups: an unexpected classification/priority value falls back to a neutral
+// style instead of throwing at render (guards against malformed or future enum values).
+const _CLS = {
   "customer-stated": { c: "var(--stated)", b: "var(--stated-soft)", label: "Customer-stated" },
   "ai-inferred": { c: "var(--inferred)", b: "var(--inferred-soft)", label: "AI-inferred" },
   assumed: { c: "var(--assumed)", b: "var(--assumed-soft)", label: "Assumed" },
 };
-const PRIO = { High: { c: "var(--hi)", b: "var(--hi-soft)" }, Medium: { c: "var(--md)", b: "var(--md-soft)" }, Low: { c: "var(--lo)", b: "var(--lo-soft)" } };
+const _PRIO = { High: { c: "var(--hi)", b: "var(--hi-soft)" }, Medium: { c: "var(--md)", b: "var(--md-soft)" }, Low: { c: "var(--lo)", b: "var(--lo-soft)" } };
+const guard = (obj, fallback) => new Proxy(obj, { get: (t, k) => (typeof k === "string" && !(k in t)) ? fallback : t[k] });
+const CLS = guard(_CLS, { c: "var(--ink-soft)", b: "var(--surface-3)", label: "—" });
+const PRIO = guard(_PRIO, { c: "var(--lo)", b: "var(--lo-soft)" });
 
 function Chip({ children, c, b, mono, title }) {
   return <span title={title} style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: 11, fontWeight: 600, padding: "2px 7px", borderRadius: 6, color: c || "var(--ink-soft)", background: b || "var(--surface-3)", fontFamily: mono ? "JetBrains Mono, monospace" : "inherit", whiteSpace: "nowrap" }}>{children}</span>;

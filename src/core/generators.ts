@@ -31,7 +31,7 @@ export function buildArchitecture(s: Session, cloud: Cloud): Architecture {
   const reqsOf = (pred: (r: Requirement) => boolean) => rs.filter(pred).map(r => r.id);
   const comps: ArchComponent[] = [];
   const add = (key: string, name: string, purpose: string, rationale: string, reqIds: string[], tradeoff: string, sec: string) =>
-    comps.push({ key, name, service: SERVICE_MAP[key][cloud], purpose, rationale, reqIds, tradeoff, sec, deps: [] });
+    comps.push({ key, name, service: (SERVICE_MAP[key] && SERVICE_MAP[key][cloud]) || `(service for ${key})`, purpose, rationale, reqIds, tradeoff, sec, deps: [] });
 
   add("web", "User-facing web app", "Front-end for associates/agents/analysts.",
     "Requirements call for browser-based apps; managed static hosting removes ops overhead.",
