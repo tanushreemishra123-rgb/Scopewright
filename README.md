@@ -28,7 +28,35 @@ Concerns are separated by responsibility, not crammed into one component:
 
 The result: the same scope model drives the UI, the exports and the tests, with no duplicated business logic between them.
 
+## Solution depth & grounding
+
+This is not a prompt-to-document tool and not a chain of independent prompts: every deliverable is a pure function of one **reviewed** scope model, and in mock mode there are **zero** mandatory AI calls. Where each required capability lives:
+
+| Solution-depth requirement | Where it's implemented |
+|---|---|
+| Structured, reviewable scope model | `Session` (`core/types.ts`), edited/approved on the Requirements stage |
+| Source traceability at requirement level | `sourceText` + `classification` are **required by `core/schema.ts`** (a requirement without a source reference is rejected) |
+| User review before downstream generation | Approval gate — PRD/architecture/strategy/estimate stay locked until the scope is approved |
+| Multiple connected deliverables | PRD, architecture, data/integration/AI, estimate, package — all from `assemblePackage()` |
+| Requirement-to-output traceability | Requirement IDs flow through capabilities, architecture components, AI use cases and estimate rows; coverage view reconciles them |
+| Explainable & reproducible estimation | `core/estimate.ts` — numbers derived from visible factors, never LLM-generated |
+| Change-impact handling | `core/changeImpact.ts` — 9 change types, immutable, affected-vs-preserved |
+| Cross-document coverage & consistency | `computeCoverage` + `runQualityGate` |
+| Pre-export quality gate | `core/quality.ts` — 11 checks + at-a-glance summary |
+
+### Information hierarchy
+
+Outputs follow a clear source hierarchy, surfaced in the UI (grounding banner on the Requirements stage) and in every export (the **Grounding & sources** section):
+
+- **Primary — customer requirements** drive the PRD, functional scope, architecture, data/integration/AI strategy, delivery plan, effort/timeline and ROM. Each requirement keeps its originating source text.
+- **Secondary — user-provided assumptions & configuration** are distinct and labelled: preferred cloud, expected user volume, target regions & delivery deadline (opportunity context), team structure, rate card, security requirements, regulatory constraints, **productivity factor**, **contingency**, and reviewed assumptions (status-tracked).
+- **AI-generated recommendations** are clearly labelled (`AI-inferred` / `Assumed` chips) and supported by requirements, architecture rationale, known constraints, explicit assumptions and user configuration.
+
+When information is insufficient, the assistant does all four required things: it **generates clarification questions**, **records an assumption requiring review**, **reduces the confidence level**, and **marks the affected output as requiring validation** (missing estimation inputs reduce or block the calculation rather than inventing values).
+
 ## Run locally
+
+
 
 ```bash
 npm install

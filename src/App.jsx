@@ -35,6 +35,11 @@ export default function App() {
   useEffect(() => { try { const raw = localStorage.getItem("scopewright"); if (raw) { const d = JSON.parse(raw); if (d.session) { setSession(d.session); setStage(d.stage || "requirements"); setCloud(d.cloud || ""); setEstCfg({ ...DEFAULT_EST, ...(d.estCfg || {}) }); } } } catch (e) {} }, []);
   useEffect(() => { try { localStorage.setItem("scopewright", JSON.stringify({ session, stage, cloud, estCfg })); } catch (e) {} }, [session, stage, cloud, estCfg]);
 
+  // The scope model is small and every generator in src/core is pure & synchronous, so
+  // recomputing the whole package on any change keeps all deliverables perfectly consistent
+  // with one source of truth. useMemo skips the work when session/cloud/estCfg are
+  // referentially unchanged, so unrelated re-renders don't recompute. A deliberate trade of
+  // a little recompute for guaranteed cross-document consistency (correctness over micro-opt).
   const pkg = useMemo(() => (session && session.approved) ? assemblePackage(session, cloud, estCfg) : null, [session, cloud, estCfg]);
   const ctx = { session, setSession, stage, setStage, cloud, setCloud, estCfg, setEstCfg, pkg };
 

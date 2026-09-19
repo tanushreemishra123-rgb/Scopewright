@@ -6,6 +6,7 @@ import { CLS, PRIO, Chip, IdChip, Btn, Card, SectionTitle } from "./primitives";
 
 function RequirementsStage({ ctx }) {
   const { session, setSession, setStage } = ctx;
+  const [showRaw, setShowRaw] = useState(false);
   const update = (patch) => setSession({ ...session, ...patch });
   const setReq = (id, patch) => update({ requirements: session.requirements.map(r => r.id === id ? { ...r, ...patch } : r) });
   const delReq = (id) => update({ requirements: session.requirements.filter(r => r.id !== id) });
@@ -22,6 +23,20 @@ function RequirementsStage({ ctx }) {
         <Chip c={CLS.assumed.c} b={CLS.assumed.b}>{counts.assumed} assumed</Chip>
       </div>
     </div>
+
+    <Card pad={13} style={{ marginBottom: 12 }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+        <div style={{ fontSize: 11.5, fontWeight: 700, letterSpacing: ".03em", textTransform: "uppercase", color: "var(--ink-faint)" }}>Customer &amp; opportunity context</div>
+        {session.raw && <button onClick={() => setShowRaw(v => !v)} style={{ fontSize: 11, color: "var(--ink-soft)", background: "none", border: "1px solid var(--line)", borderRadius: 6, padding: "3px 8px" }}>{showRaw ? "Hide" : "Normalized content preview"}</button>}
+      </div>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(150px,1fr))", gap: 10 }}>
+        {Object.entries(session.context || {}).filter(([k, v]) => v && k !== "cloud").map(([k, v]) => <div key={k}><div style={{ fontSize: 10.5, color: "var(--ink-faint)", textTransform: "capitalize" }}>{k}</div><div style={{ fontSize: 12.5, fontWeight: 500 }}>{v}</div></div>)}
+      </div>
+      {showRaw && session.raw && <div style={{ marginTop: 10, paddingTop: 10, borderTop: "1px dashed var(--line)" }}>
+        <div style={{ fontSize: 10.5, color: "var(--ink-faint)", marginBottom: 5 }}>Normalized requirements (as submitted)</div>
+        <pre style={{ whiteSpace: "pre-wrap", fontFamily: "inherit", fontSize: 12.3, lineHeight: 1.55, margin: 0, color: "var(--ink-soft)", maxHeight: 220, overflowY: "auto" }}>{session.raw}</pre>
+      </div>}
+    </Card>
 
     <Card pad={13} style={{ marginBottom: 16, background: "var(--surface-2)" }}>
       <div style={{ fontSize: 11.5, fontWeight: 700, letterSpacing: ".03em", textTransform: "uppercase", color: "var(--ink-faint)", marginBottom: 8 }}>Grounding hierarchy — every output traces to one of these labeled layers</div>
