@@ -1,4 +1,5 @@
 import type { Session, EstimateConfig, Cloud } from "./types";
+import { TUNING } from "./tuning";
 
 export type ChangeType = "users" | "cloud" | "contingency" | "priority" | "scope" | "security" | "integration" | "rate" | "deadline";
 export interface ImpactResult {
@@ -21,7 +22,7 @@ export function computeChangeImpact(session: Session, cfg: EstimateConfig, cloud
   switch (type) {
     case "users": {
       desc = "Expected user volume increased 10×.";
-      c = { ...cfg, contingency: Math.min(40, cfg.contingency + 5), cloudComplexity: "High" };
+      c = { ...cfg, contingency: Math.min(TUNING.change.maxContingency, cfg.contingency + TUNING.change.userVolumeContingencyBump), cloudComplexity: "High" };
       // reference the real scalability requirement IDs in scope, and raise their priority
       const scaleReqs = session.requirements.filter(r => r.included !== false && (r.type === "Non-functional" || /scale|peak|concurren|volume|throughput|latenc/i.test(r.description)));
       s = { ...session, requirements: session.requirements.map(r => scaleReqs.some(x => x.id === r.id) ? { ...r, priority: "High" } : r) };
@@ -40,8 +41,8 @@ export function computeChangeImpact(session: Session, cfg: EstimateConfig, cloud
       break;
     }
     case "contingency": {
-      desc = "Contingency raised to 30%.";
-      c = { ...cfg, contingency: 30 };
+      desc = `Contingency raised to ${TUNING.change.contingencyTarget}%.`;
+      c = { ...cfg, contingency: TUNING.change.contingencyTarget };
       affected = ["ROM estimate", "Total person-weeks"];
       unaffected = ["Scope", "Architecture", "Data & AI strategy", "Requirement coverage", "Base effort"];
       break;
@@ -88,15 +89,15 @@ export function computeChangeImpact(session: Session, cfg: EstimateConfig, cloud
       break;
     }
     case "rate": {
-      const newRate = Math.round(cfg.blendedRate * 1.15);
+      const newRate = Math.round(cfg.blendedRate * TUNING.change.rateMultiplier);
       c = { ...cfg, blendedRate: newRate };
-      desc = `Rate card increased 15% to ${cfg.currency} ${newRate.toLocaleString()}/wk.`;
+      desc = `Rate card increased ${Math.round((TUNING.change.rateMultiplier - 1) * 100)}% to ${cfg.currency} ${newRate.toLocaleString()}/wk.`;
       affected = ["ROM commercials", "Role-based cost breakdown"];
       unaffected = ["Effort in person-weeks", "Scope", "Architecture", "Timeline", "Requirement coverage"];
       break;
     }
     case "deadline": {
-      const newTeam = Math.min(14, cfg.teamSize + 3);
+      const newTeam = Math.min(TUNING.change.maxTeamSize, cfg.teamSize + TUNING.change.deadlineTeamBump);
       c = { ...cfg, teamSize: newTeam };
       desc = `Delivery deadline tightened — team grown to ${newTeam} for more parallelism.`;
       affected = ["Delivery timeline (compressed)", "Team composition", "Delivery risk (coordination)"];

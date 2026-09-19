@@ -1,6 +1,7 @@
 import type { Session, Capability, Architecture, Coverage } from "./types";
 import type { Estimate } from "./estimate";
 import { CLOUDS } from "./cloudMap";
+import { TUNING } from "./tuning";
 
 export interface QualityCheck { label: string; ok: boolean; detail: string; }
 export interface QualitySummary { coveragePct: number; uncovered: number; unresolved: number; unsupported: number; confidence: string; status: string; }
@@ -22,10 +23,10 @@ export function runQualityGate(
     detail: cov.dangling.length ? `Outputs reference excluded/removed reqs: ${cov.dangling.join(", ")}` : "No references to excluded requirements." });
   checks.push({ label: "Architecture generated", ok: !!arch,
     detail: arch ? `Cloud: ${CLOUDS[arch.cloud]}, ${arch.components.length} components.` : "Select a cloud and generate the architecture." });
-  const compsNoReq = arch ? arch.components.filter(c => c.reqIds.length === 0 && !["obs", "cicd"].includes(c.key)) : [];
+  const compsNoReq = arch ? arch.components.filter(c => c.reqIds.length === 0 && !TUNING.quality.unjustifiedComponentExemptKeys.includes(c.key)) : [];
   checks.push({ label: "Components justified by requirements", ok: compsNoReq.length === 0,
     detail: compsNoReq.length ? `${compsNoReq.length} component(s) lack a requirement reference.` : "Every functional component references a requirement." });
-  const aiOk = !ai || !ai.cases.length || ai.responsible.length >= 3;
+  const aiOk = !ai || !ai.cases.length || ai.responsible.length >= TUNING.quality.minResponsibleAiConsiderations;
   checks.push({ label: "AI use cases have safety/eval/human-review", ok: aiOk,
     detail: ai && ai.cases.length ? "Evaluation, human-review and privacy considerations present." : "No AI use cases in scope." });
   checks.push({ label: "Clarification questions resolved", ok: (s.openQuestions || []).every(q => q.resolved),

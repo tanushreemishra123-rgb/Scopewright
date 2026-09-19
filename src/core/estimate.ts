@@ -1,21 +1,12 @@
 import type { Session, Capability, Architecture, Coverage, EstimateConfig } from "./types";
 import { includedReqs, buildRisks } from "./generators";
+import { TUNING } from "./tuning";
 
-// Role weekly rates (day rate × 5) — mirrors seed/rate-card.json.
-export const ROLE_RATES: Record<string, number> = {
-  "Solution Architect": 5750, "Tech Lead": 5000, "Senior Engineer": 4250, "Engineer": 3250,
-  "Data Engineer": 4000, "AI/ML Engineer": 4750, "QA Engineer": 3000, "Delivery Manager": 4500, "Business Analyst": 3500,
-};
-// Role mix per workstream category (fractions of that category's effort).
-const ROLE_MIX: Record<string, Record<string, number>> = {
-  capability:  { "Delivery Manager": 0.08, "Tech Lead": 0.15, "Senior Engineer": 0.32, "Engineer": 0.32, "Business Analyst": 0.13 },
-  integration: { "Delivery Manager": 0.08, "Tech Lead": 0.15, "Data Engineer": 0.33, "Senior Engineer": 0.32, "Engineer": 0.12 },
-  ai:          { "Solution Architect": 0.10, "AI/ML Engineer": 0.45, "Senior Engineer": 0.28, "Tech Lead": 0.17 },
-  security:    { "Solution Architect": 0.40, "Senior Engineer": 0.60 },
-  testing:     { "QA Engineer": 0.70, "Engineer": 0.30 },
-  other:       { "Data Engineer": 0.50, "Engineer": 0.50 },
-};
-const PHASE_WEIGHTS = [0.10, 0.28, 0.22, 0.18, 0.14, 0.08];
+// All tuning values are sourced from the single documented TUNING table (see tuning.ts);
+// these named aliases keep the calculation code readable while avoiding magic numbers.
+export const ROLE_RATES = TUNING.roleRates;
+const ROLE_MIX = TUNING.roleMix;
+const PHASE_WEIGHTS = TUNING.delivery.phaseWeights;
 
 /** Coverage: which included requirements are referenced by downstream outputs. */
 export function computeCoverage(s: Session, caps: Capability[], arch: Architecture | null, ai: { reqs: string[] } | null): Coverage {
@@ -35,20 +26,16 @@ export const DEFAULT_EST: EstimateConfig = {
   blendedRate: 4200, currency: "EUR", contingency: 20, teamSize: 6, weeklyHours: 38, environments: 3, dataMigration: false,
   productivity: 1.0, cloudComplexity: "Medium",
 };
-const CLOUD_COMPLEXITY_PCT: Record<string, number> = { Low: 0, Medium: 0.05, High: 0.10 };
+const CLOUD_COMPLEXITY_PCT = TUNING.uplift.cloudComplexityPct;
 
 // Currency-aware grouping: pick the locale for the selected currency rather than the
 // machine's default (which would render every currency with the same grouping).
-const CURRENCY_LOCALE: Record<string, string> = { INR: "en-IN", USD: "en-US", GBP: "en-GB", EUR: "en-IE" };
+const CURRENCY_LOCALE = TUNING.currencyLocale;
 export function formatMoney(n: number, currency: string): string {
   const locale = CURRENCY_LOCALE[currency] || "en-US";
   return `${currency} ${Math.round(n).toLocaleString(locale)}`;
 }
-export const EFFORT = {
-  capability: { Low: 3, Medium: 6, High: 10 } as Record<string, number>,
-  integration: { Low: 2, Medium: 4, High: 6 } as Record<string, number>,
-  ai: { Low: 4, Medium: 6, High: 10 } as Record<string, number>,
-};
+export const EFFORT = TUNING.effort;
 export const PHASES = [
   "Discovery & Architecture", "Experience & Core Platform", "Data & Integration",
   "AI Capabilities", "Testing & Hardening", "Deployment & Handover",
@@ -90,10 +77,10 @@ export function computeEstimate(s: Session, caps: Capability[], cfg: EstimateCon
   });
 
   const secReqs = includedReqs(s).filter(r => r.type === "Security").length;
-  const securityUplift = secReqs >= 2 ? Math.round(base * 0.10) : 0;
-  const testingUplift = Math.round(base * 0.15);
-  const envUplift = Math.max(0, cfg.environments - 1) * 2;
-  const migrationUplift = cfg.dataMigration ? 8 : 0;
+  const securityUplift = secReqs >= TUNING.uplift.securityReqThreshold ? Math.round(base * TUNING.uplift.securityPct) : 0;
+  const testingUplift = Math.round(base * TUNING.uplift.testingPct);
+  const envUplift = Math.max(0, cfg.environments - 1) * TUNING.uplift.envPerExtraEnv;
+  const migrationUplift = cfg.dataMigration ? TUNING.uplift.dataMigration : 0;
   const productivityUplift = Math.round(base * (cfg.productivity - 1));           // productivity factor
   const cloudUplift = Math.round(base * (CLOUD_COMPLEXITY_PCT[cfg.cloudComplexity] || 0)); // cloud infra complexity
   const subtotal = base + securityUplift + testingUplift + envUplift + migrationUplift + productivityUplift + cloudUplift;
@@ -103,9 +90,9 @@ export function computeEstimate(s: Session, caps: Capability[], cfg: EstimateCon
 
   const openUnresolved = (s.openQuestions || []).filter(q => !q.resolved).length;
   const needsReview = (s.assumptions || []).filter(a => a.status === "needs-review").length;
-  let confidence: Estimate["confidence"] = "High", band = 0.12; const reasons: string[] = [];
-  if (openUnresolved > 0) { confidence = "Medium"; band = 0.20; reasons.push(`${openUnresolved} unresolved clarification question(s)`); }
-  if (openUnresolved >= 3 || needsReview >= 3) { confidence = "Low"; band = 0.30; reasons.push(`${needsReview} assumption(s) need review`); }
+  let confidence: Estimate["confidence"] = "High", band = TUNING.confidence.band.High; const reasons: string[] = [];
+  if (openUnresolved >= TUNING.confidence.mediumWhenOpenQuestions) { confidence = "Medium"; band = TUNING.confidence.band.Medium; reasons.push(`${openUnresolved} unresolved clarification question(s)`); }
+  if (openUnresolved >= TUNING.confidence.lowWhenOpenQuestions || needsReview >= TUNING.confidence.lowWhenAssumptionsNeedReview) { confidence = "Low"; band = TUNING.confidence.band.Low; reasons.push(`${needsReview} assumption(s) need review`); }
 
   const missing: string[] = [];
   if (!s.context || !s.context.cloud) missing.push("Cloud platform not selected");
@@ -114,7 +101,7 @@ export function computeEstimate(s: Session, caps: Capability[], cfg: EstimateCon
   const blocked = missing.length > 0;
   const limitation = reasons.length ? reasons.join("; ") : "No major limitations noted; inputs complete.";
 
-  const parallel = Math.min(cfg.teamSize, 4);
+  const parallel = Math.min(cfg.teamSize, TUNING.delivery.maxParallelWorkstreams);
   const durationWeeks = Math.ceil(totalWeeks / parallel);
 
   // ---- effort range (from confidence band): total + per workstream row ----
